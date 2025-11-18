@@ -13,8 +13,8 @@ type ContactApply struct {
 	ContactType int8           `gorm:"column:contact_type;not null;comment:被申请类型，0.用户，1.群聊"`
 	Status      int8           `gorm:"column:status;not null;comment:申请状态，0.申请中，1.通过，2.拒绝，3.拉黑"`
 	Message     string         `gorm:"column:message;type:varchar(100);comment:申请信息"`
-	LastApplyAt time.Time      `gorm:"column:last_apply_at;type:datetime;not null;comment:最后申请时间"`
-	DeletedAt   gorm.DeletedAt `gorm:"column:deleted_at;index;type:datetime;comment:删除时间"`
+	LastApplyAt time.Time      `gorm:"column:last_apply_at;type:timestamp;not null;comment:最后申请时间"`
+	DeletedAt   gorm.DeletedAt `gorm:"column:deleted_at;index;type:timestamp;comment:删除时间"`
 }
 
 func (ContactApply) TableName() string {

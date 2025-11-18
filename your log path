@@ -1,0 +1,2 @@
+{"level":"fatal","ts":"2025-11-18T21:24:46.210+0800","msg":"failed to connect to `user=postgres database=`: 127.0.0.1:5432 (127.0.0.1): dial error: dial tcp 127.0.0.1:5432: connectex: No connection could be made because the target machine actively refused it.","func":"dao.init.0","file":"D:/codes/go/wework-reborn/internal/dao/gorm.go","line":30}
+{"level":"fatal","ts":"2025-11-18T21:25:18.856+0800","msg":"ERROR: type \"datetime\" does not exist (SQLSTATE 42704)","func":"dao.init.0","file":"D:/codes/go/wework-reborn/internal/dao/gorm.go","line":36}
