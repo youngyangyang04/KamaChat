@@ -46,15 +46,20 @@ func init() {
 
 // 将https://127.0.0.1:8000/static/xxx 转为 /static/xxx
 func normalizePath(path string) string {
-	// 查找 "/static/" 的位置
-	if path == "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png" {
+	// 如果是 HTTP/HTTPS URL，直接返回（外部资源）
+	if strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://") {
 		return path
 	}
+	
+	// 查找 "/static/" 的位置
 	staticIndex := strings.Index(path, "/static/")
 	if staticIndex < 0 {
-		log.Println(path)
-		zlog.Error("路径不合法")
+		// 找不到 "/static/"，返回原路径
+		log.Println("路径不包含 /static/:", path)
+		zlog.Warn("路径不包含 /static/，返回原路径: " + path)
+		return path
 	}
+	
 	// 返回从 "/static/" 开始的部分
 	return path[staticIndex:]
 }

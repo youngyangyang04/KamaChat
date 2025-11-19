@@ -9,6 +9,24 @@
 - 修改 `web/chat-server/vue.config.js`：前端改用 HTTP 在 8080 端口运行
 - 添加依赖：`gorm.io/driver/postgres v1.6.0` 及相关 PostgreSQL 驱动包
 
+### 2025-11-19 - 修复发送消息时后端 panic
+- 修复 `internal/service/chat/server.go`：normalizePath 函数处理外部 URL 时 slice 越界
+- **问题**：发送消息时后端崩溃，`panic: runtime error: slice bounds out of range [-1:]`
+- **原因**：头像 URL 是外部 HTTPS 链接，不包含 `/static/`，`staticIndex` 为 -1，导致 `path[-1:]` 越界
+- **修复**：检查路径是否为 HTTP/HTTPS URL，如果是则直接返回；如果找不到 `/static/` 也返回原路径
+
+### 2025-11-19 - 修复 WebSocket 连接需要 JWT 认证
+- 修改 `pkg/middleware/jwt_auth.go`：JWT 中间件支持从 query 参数读取 token
+- 修改前端 WebSocket 连接：在 URL 中添加 token 参数
+  - `web/chat-server/src/App.vue`
+  - `web/chat-server/src/views/access/Login.vue`
+  - `web/chat-server/src/views/access/Register.vue`
+  - `web/chat-server/src/views/access/SmsLogin.vue`
+- 修改 `web/chat-server/src/views/chat/contact/ContactChat.vue`：sendMessage 函数添加完整的错误检查和调试日志
+- **问题**：WebSocket 连接失败，点击发送按钮显示"WebSocket 连接已断开"
+- **原因**：/wss 路由需要 JWT 认证，但 WebSocket 连接时未传递 token
+- **修复**：后端支持从 query 参数读取 token，前端在 WebSocket URL 中添加 token 参数
+
 ### 2025-11-19 - 修复退出登录 401 错误
 - 修复 `web/chat-server/src/components/NavigationModal.vue`：调整 logout 函数执行顺序
 - **问题**：退出登录时报 401 错误

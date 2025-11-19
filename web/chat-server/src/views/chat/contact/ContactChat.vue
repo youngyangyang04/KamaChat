@@ -1506,6 +1506,37 @@ export default {
       router.push("/chat/sessionlist");
     };
     const sendMessage = () => {
+      // 检查消息内容
+      if (!data.chatMessage || data.chatMessage.trim() === "") {
+        console.log("消息内容为空，不发送");
+        return;
+      }
+
+      // 检查 WebSocket 连接状态
+      if (!store.state.socket) {
+        console.error("WebSocket 未连接");
+        ElMessage.error("WebSocket 未连接，请刷新页面");
+        return;
+      }
+
+      if (store.state.socket.readyState !== WebSocket.OPEN) {
+        console.error("WebSocket 连接状态异常：", store.state.socket.readyState);
+        ElMessage.error("WebSocket 连接已断开，请刷新页面");
+        return;
+      }
+
+      // 检查必要的数据
+      if (!data.sessionId || !data.contactInfo.contact_id) {
+        console.error("会话信息不完整", {
+          sessionId: data.sessionId,
+          contactId: data.contactInfo.contact_id
+        });
+        ElMessage.error("会话信息不完整");
+        return;
+      }
+
+      console.log("准备发送消息：", data.chatMessage);
+
       const chatMessageRequest = {
         session_id: data.sessionId,
         type: 0,
@@ -1519,9 +1550,17 @@ export default {
         file_name: "",
         file_type: "",
       };
-      store.state.socket.send(JSON.stringify(chatMessageRequest));
-      data.chatMessage = "";
-      scrollToBottom();
+
+      try {
+        console.log("发送消息请求：", chatMessageRequest);
+        store.state.socket.send(JSON.stringify(chatMessageRequest));
+        console.log("消息已发送");
+        data.chatMessage = "";
+        scrollToBottom();
+      } catch (error) {
+        console.error("发送消息失败：", error);
+        ElMessage.error("发送消息失败：" + error.message);
+      }
     };
 
     const sendFileMessage = async (fileUrl) => {

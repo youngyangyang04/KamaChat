@@ -4,37 +4,43 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	jwtutil "kama_chat_server/pkg/util/jwt"
 	"kama_chat_server/pkg/zlog"
+
+	"github.com/gin-gonic/gin"
 )
 
 // JWTAuth JWT 认证中间件
 func JWTAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 从请求头获取 token
+		var tokenString string
+
+		// 优先从请求头获取 token
 		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code":    401,
-				"message": "请求头中缺少 Authorization",
-			})
-			c.Abort()
-			return
+		if authHeader != "" {
+			// 解析 token（格式：Bearer <token>）
+			parts := strings.SplitN(authHeader, " ", 2)
+			if !(len(parts) == 2 && parts[0] == "Bearer") {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"code":    401,
+					"message": "Authorization 格式错误，应为 Bearer <token>",
+				})
+				c.Abort()
+				return
+			}
+			tokenString = parts[1]
+		} else {
+			// 如果请求头中没有 token，尝试从 query 参数获取（用于 WebSocket）
+			tokenString = c.Query("token")
+			if tokenString == "" {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"code":    401,
+					"message": "缺少认证 token",
+				})
+				c.Abort()
+				return
+			}
 		}
-
-		// 解析 token（格式：Bearer <token>）
-		parts := strings.SplitN(authHeader, " ", 2)
-		if !(len(parts) == 2 && parts[0] == "Bearer") {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"code":    401,
-				"message": "Authorization 格式错误，应为 Bearer <token>",
-			})
-			c.Abort()
-			return
-		}
-
-		tokenString := parts[1]
 
 		// 验证 token
 		claims, err := jwtutil.ParseToken(tokenString)

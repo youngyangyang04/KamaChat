@@ -146,7 +146,7 @@ export default {
           store.commit("setUserInfo", response.data.data);
           // 准备创建websocket连接
           const wsUrl =
-            store.state.wsUrl + "/wss?client_id=" + response.data.data.uuid;
+            store.state.wsUrl + "/wss?client_id=" + response.data.data.uuid + "&token=" + encodeURIComponent(response.data.data.token);
           console.log(wsUrl);
           store.state.socket = new WebSocket(wsUrl);
           store.state.socket.onopen = () => {

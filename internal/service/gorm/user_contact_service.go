@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-redis/redis/v8"
-	"gorm.io/gorm"
 	"kama_chat_server/internal/dao"
 	"kama_chat_server/internal/dto/request"
 	"kama_chat_server/internal/dto/respond"
@@ -21,6 +19,9 @@ import (
 	"kama_chat_server/pkg/zlog"
 	"log"
 	"time"
+
+	"github.com/go-redis/redis/v8"
+	"gorm.io/gorm"
 )
 
 type userContactService struct {
