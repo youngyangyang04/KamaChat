@@ -54,7 +54,7 @@
 
 <script>
 import { reactive, toRefs } from "vue";
-import axios from "axios";
+import axios from "@/utils/axios";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useStore } from "vuex";
@@ -76,10 +76,7 @@ export default {
           return;
         }
 	console.log(store.state.backendUrl, store.state.wsUrl);
-        const response = await axios.post(
-          store.state.backendUrl + "/login",
-          data.loginData
-        );
+        const response = await axios.post("/login", data.loginData);
         console.log(response);
         if (response.data.code == 200) {
           if (response.data.data.status == 1) {
@@ -107,8 +104,8 @@ export default {
             store.state.socket.onclose = () => {
               console.log("WebSocket连接已关闭");
             };
-            store.state.socket.onerror = () => {
-              console.log("WebSocket连接发生错误");
+            store.state.socket.onerror = (error) => {
+              console.log("WebSocket连接发生错误", error);
             };
             router.push("/chat/sessionlist");
           } catch (error) {

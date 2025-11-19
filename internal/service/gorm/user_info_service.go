@@ -12,6 +12,7 @@ import (
 	"kama_chat_server/internal/service/sms"
 	"kama_chat_server/pkg/constants"
 	"kama_chat_server/pkg/enum/user_info/user_status_enum"
+	jwtutil "kama_chat_server/pkg/util/jwt"
 	"kama_chat_server/pkg/util/password"
 	"kama_chat_server/pkg/util/random"
 	"kama_chat_server/pkg/zlog"
@@ -74,7 +75,15 @@ func (u *userInfoService) Login(loginReq request.LoginRequest) (string, *respond
 		return message, nil, -2
 	}
 
+	// 生成 JWT token
+	token, err := jwtutil.GenerateToken(user.Uuid, user.Account, user.Nickname, user.IsAdmin)
+	if err != nil {
+		zlog.Error("生成 token 失败: " + err.Error())
+		return constants.SYSTEM_ERROR, nil, -1
+	}
+
 	loginRsp := &respond.LoginRespond{
+		Token:     token,
 		Uuid:      user.Uuid,
 		Account:   user.Account,
 		Nickname:  user.Nickname,
@@ -211,7 +220,15 @@ func (u *userInfoService) Register(registerReq request.RegisterRequest) (string,
 		return constants.SYSTEM_ERROR, nil, -1
 	}
 
+	// 生成 JWT token
+	token, err := jwtutil.GenerateToken(newUser.Uuid, newUser.Account, newUser.Nickname, newUser.IsAdmin)
+	if err != nil {
+		zlog.Error("生成 token 失败: " + err.Error())
+		return constants.SYSTEM_ERROR, nil, -1
+	}
+
 	registerRsp := &respond.RegisterRespond{
+		Token:     token,
 		Uuid:      newUser.Uuid,
 		Account:   newUser.Account,
 		Nickname:  newUser.Nickname,

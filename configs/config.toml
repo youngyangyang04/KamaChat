@@ -6,6 +6,11 @@ enableHTTPS = false  # 是否启用 HTTPS，false 为 HTTP 模式
 certFile = "pkg/ssl/127.0.0.1+2.pem"  # HTTPS 证书文件路径
 keyFile = "pkg/ssl/127.0.0.1+2-key.pem"  # HTTPS 私钥文件路径
 
+[jwtConfig]
+secretKey = "this-is-a-token-secret-key-of-wework"  # JWT 密钥，生产环境务必修改
+expireHours = 24  # Token 过期时间（小时）
+refreshHours = 168  # 刷新 Token 过期时间（小时，168小时=7天）
+
 [postgresqlConfig]
 host = "127.0.0.1"
 port = 5432

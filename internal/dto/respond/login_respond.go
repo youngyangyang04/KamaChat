@@ -1,6 +1,7 @@
 package respond
 
 type LoginRespond struct {
+	Token     string `json:"token"`
 	Uuid      string `json:"uuid"`
 	Account   string `json:"account"`
 	Nickname  string `json:"nickname"`

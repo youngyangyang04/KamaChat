@@ -119,7 +119,7 @@ import { useRouter } from "vue-router";
 import { useStore } from "vuex";
 import { ElMessage } from "element-plus";
 import { reactive, toRefs } from "vue";
-import axios from "axios";
+import axios from "@/utils/axios";
 export default {
   name: "NavigationModal",
   setup() {
@@ -142,19 +142,26 @@ export default {
       router.push("/manager");
     };
     const logout = async () => {
-      store.commit("cleanUserInfo");
-      const req = {
-        owner_id: data.userInfo.uuid,
-      };
-      const rsp = await axios.post(
-        store.state.backendUrl + "/user/wsLogout",
-        req
-      );
-      if (rsp.data.code == 200) {
+      try {
+        const req = {
+          owner_id: store.state.userInfo.uuid,
+        };
+        // 先调用退出登录接口（此时 token 还在）
+        const rsp = await axios.post("/user/wsLogout", req);
+        
+        if (rsp.data.code == 200) {
+          // 接口成功后再清除 token
+          store.commit("cleanUserInfo");
+          ElMessage.success(rsp.data.message);
+          router.push("/login");
+        } else {
+          ElMessage.error(rsp.data.message);
+        }
+      } catch (error) {
+        // 即使接口失败，也清除本地 token（避免卡住）
+        console.error("退出登录失败", error);
+        store.commit("cleanUserInfo");
         router.push("/login");
-        ElMessage.success(rsp.data.message);
-      } else {
-        ElMessage.error(rsp.data.message);
       }
     };
     const handleToOwnInfo = () => {

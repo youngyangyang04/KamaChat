@@ -57,6 +57,12 @@ type StaticSrcConfig struct {
 	StaticFilePath   string `toml:"staticFilePath"`
 }
 
+type JWTConfig struct {
+	SecretKey    string `toml:"secretKey"`
+	ExpireHours  int    `toml:"expireHours"`
+	RefreshHours int    `toml:"refreshHours"`
+}
+
 type Config struct {
 	MainConfig       `toml:"mainConfig"`
 	PostgresqlConfig `toml:"postgresqlConfig"`
@@ -65,6 +71,7 @@ type Config struct {
 	LogConfig        `toml:"logConfig"`
 	KafkaConfig      `toml:"kafkaConfig"`
 	StaticSrcConfig  `toml:"staticSrcConfig"`
+	JWTConfig        `toml:"jwtConfig"`
 }
 
 var config *Config

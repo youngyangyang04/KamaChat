@@ -205,7 +205,7 @@
 <script>
 import { reactive, toRefs, onMounted, ref } from "vue";
 import { useStore } from "vuex";
-import axios from "axios";
+import axios from "@/utils/axios";
 import { useRouter } from "vue-router";
 import Modal from "@/components/Modal.vue";
 import { checkEmailValid } from "@/assets/js/valid.js";

@@ -9,6 +9,54 @@
 - 修改 `web/chat-server/vue.config.js`：前端改用 HTTP 在 8080 端口运行
 - 添加依赖：`gorm.io/driver/postgres v1.6.0` 及相关 PostgreSQL 驱动包
 
+### 2025-11-19 - 修复退出登录 401 错误
+- 修复 `web/chat-server/src/components/NavigationModal.vue`：调整 logout 函数执行顺序
+- **问题**：退出登录时报 401 错误
+- **原因**：先清除了 token，再调用退出登录接口，导致接口无权限
+- **修复**：改为先调用接口，成功后再清除 token，并添加错误处理
+
+### 2025-11-19 - 修复 WebSocket onerror 回调错误
+- 修复 `web/chat-server/src/App.vue`：WebSocket onerror 回调添加 error 参数
+- 修复 `web/chat-server/src/views/access/Login.vue`：WebSocket onerror 回调添加 error 参数
+- 修复 `web/chat-server/src/views/access/Register.vue`：WebSocket onerror 回调添加 error 参数
+- 修复 `web/chat-server/src/views/access/SmsLogin.vue`：WebSocket onerror 回调添加 error 参数
+- **问题**：刷新页面时报错 "ReferenceError: error is not defined"
+- **原因**：onerror 回调函数未声明 error 参数就使用了 error 变量
+
+### 2025-11-19 - 引入 JWT Token 认证机制
+**后端修改：**
+- 新增 `pkg/util/jwt/jwt.go`：JWT token 生成、解析和刷新功能
+- 新增 `pkg/middleware/jwt_auth.go`：JWT 认证中间件，验证请求头中的 token
+- 修改 `configs/config.toml`：添加 JWT 配置（secretKey、expireHours、refreshHours）
+- 修改 `internal/config/config.go`：添加 `JWTConfig` 结构体
+- 修改 `pkg/util/jwt/jwt.go`：在 init 函数中自动读取配置并初始化（通过依赖链自动执行）
+- 修改 `internal/service/gorm/user_info_service.go`：
+  - 登录时生成 token 并返回
+  - 注册时生成 token 并返回
+- 修改 `internal/dto/respond/login_respond.go` 和 `register_respond.go`：添加 `Token` 字段
+- 修改 `internal/https_server/https_server.go`：
+  - 登录和注册接口无需认证
+  - 其他所有接口需要 JWT 认证
+- 添加依赖：`github.com/golang-jwt/jwt/v5`
+
+**前端修改：**
+- 修改 `web/chat-server/src/store/index.js`：
+  - 添加 `token` 状态管理
+  - 登录/注册时自动保存 token
+  - 退出登录时清除 token
+- 新增 `web/chat-server/src/utils/axios.js`：
+  - 请求拦截器自动在请求头添加 Authorization: Bearer <token>
+  - 响应拦截器处理 401 未授权错误，自动跳转登录
+- 修改所有 Vue 组件：将 `import axios from 'axios'` 改为 `import axios from '@/utils/axios'`
+  - views 目录：Login.vue, Register.vue, SmsLogin.vue, Manager.vue, OwnInfo.vue, SessionList.vue, ContactList.vue, ContactChat.vue
+  - components 目录：SetAdminModal.vue, DisableUserModal.vue, NavigationModal.vue, ContactListModal.vue 等
+
+**Token 特性：**
+- 有效期：24小时（可配置）
+- 格式：JWT (HS256)
+- 携带信息：UUID、账号、昵称、是否管理员
+- 自动续期：可通过刷新 token API 续期（7天有效期）
+
 ### 2025-11-19 - 添加密码加密功能
 - 新增 `pkg/util/password/password.go`：使用 bcrypt 算法实现密码加密和验证
 - 修改 `internal/service/gorm/user_info_service.go`：

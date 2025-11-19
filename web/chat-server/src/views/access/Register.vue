@@ -87,7 +87,7 @@
 
 <script>
 import { reactive, toRefs } from "vue";
-import axios from "axios";
+import axios from "@/utils/axios";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useStore } from "vuex";
@@ -134,10 +134,7 @@ export default {
           ElMessage.error("密码长度在 6 到 50 个字符。");
           return;
         }
-        const response = await axios.post(
-          store.state.backendUrl + "/register",
-          data.registerData
-        ); // 发送POST请求
+        const response = await axios.post("/register", data.registerData);
         if (response.data.code == 200) {
           ElMessage.success(response.data.message);
           console.log(response.data.message);
@@ -161,8 +158,8 @@ export default {
           store.state.socket.onclose = () => {
             console.log("WebSocket连接已关闭");
           };
-          store.state.socket.onerror = () => {
-            console.log("WebSocket连接发生错误");
+          store.state.socket.onerror = (error) => {
+            console.log("WebSocket连接发生错误", error);
           };
           router.push("/chat/sessionlist");
         } else {

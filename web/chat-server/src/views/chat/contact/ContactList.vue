@@ -195,7 +195,7 @@ import Modal from "@/components/Modal.vue";
 import SmallModal from "@/components/SmallModal.vue";
 import ContactListModal from "@/components/ContactListModal.vue";
 import NavigationModal from "@/components/NavigationModal.vue";
-import axios from "axios";
+import axios from "@/utils/axios";
 import { ElMessage } from "element-plus";
 export default {
   name: "ContactList",

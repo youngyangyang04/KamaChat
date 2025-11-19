@@ -52,7 +52,7 @@
 <script>
 import { onMounted, reactive, toRefs } from 'vue';
 import { useStore } from 'vuex';
-import axios from 'axios';
+import axios from '@/utils/axios';
 export default {
   name: "DeleteUserModal",
   props: {

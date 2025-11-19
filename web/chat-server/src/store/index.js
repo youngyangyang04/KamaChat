@@ -11,6 +11,7 @@ export default createStore({
     // 信令服务器地址
     // signalUrl: 'wss://127.0.0.1:8001',
     userInfo: (sessionStorage.getItem('userInfo') && JSON.parse(sessionStorage.getItem('userInfo'))) || {},
+    token: sessionStorage.getItem('token') || '',
     socket: null,
   },
   getters: {
@@ -19,10 +20,17 @@ export default createStore({
     setUserInfo(state, userInfo) {
       state.userInfo = userInfo;
       sessionStorage.setItem('userInfo', JSON.stringify(userInfo));
+      // 同时保存 token
+      if (userInfo.token) {
+        state.token = userInfo.token;
+        sessionStorage.setItem('token', userInfo.token);
+      }
     },
     cleanUserInfo(state) {
       state.userInfo = {};
+      state.token = '';
       sessionStorage.removeItem('userInfo');
+      sessionStorage.removeItem('token');
     }
   },
   actions: {

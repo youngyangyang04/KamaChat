@@ -5,7 +5,7 @@
 <script>
 import { onMounted } from "vue";
 import { useStore } from "vuex";
-import axios from "axios";
+import axios from "@/utils/axios";
 export default {
   name: "App",
   setup() {
@@ -15,10 +15,7 @@ export default {
         const req = {
           uuid: store.state.userInfo.uuid,
         };
-        const rsp = await axios.post(
-          store.state.backendUrl + "/user/getUserInfo",
-          req
-        );
+        const rsp = await axios.post("/user/getUserInfo", req);
         if (rsp.data.code == 200) {
           if (!rsp.data.data.avatar.startsWith("http")) {
             rsp.data.data.avatar = store.state.backendUrl + rsp.data.data.avatar;
@@ -68,8 +65,9 @@ export default {
           console.log("WebSocket连接已关闭");
         console.log("连接信令服务器断开");
         };
-        store.state.socket.onerror = () => {
-          console.log("WebSocket连接发生错误");console.log("连接信令服务器失败，错误信息：", error);
+        store.state.socket.onerror = (error) => {
+          console.log("WebSocket连接发生错误");
+          console.log("连接信令服务器失败，错误信息：", error);
         };
         console.log(store.state.socket);
       }

@@ -246,7 +246,7 @@ import { reactive, toRefs, onMounted, ref } from "vue";
 import { onBeforeRouteUpdate, useRouter } from "vue-router";
 import { ElMessageBox, ElMessage } from "element-plus";
 import { useStore } from "vuex";
-import axios from "axios";
+import axios from "@/utils/axios";
 import Modal from "@/components/Modal.vue";
 import NavigationModal from "@/components/NavigationModal.vue";
 export default {

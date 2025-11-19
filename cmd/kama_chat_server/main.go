@@ -18,6 +18,7 @@ func main() {
 	host := conf.MainConfig.Host
 	port := conf.MainConfig.Port
 	kafkaConfig := conf.KafkaConfig
+
 	if kafkaConfig.MessageMode == "kafka" {
 		kafka.KafkaService.KafkaInit()
 	}

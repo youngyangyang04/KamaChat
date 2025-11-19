@@ -372,7 +372,7 @@
 import { reactive, toRefs, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useStore } from "vuex";
-import axios from "axios";
+import axios from "@/utils/axios";
 import { ElMessage } from "element-plus";
 import Modal from "./Modal.vue";
 import SmallModal from "./SmallModal.vue";

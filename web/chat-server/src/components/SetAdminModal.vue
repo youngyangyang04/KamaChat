@@ -55,7 +55,7 @@
 import { ElTable } from "element-plus";
 import { onMounted, reactive, toRefs } from "vue";
 import { useStore } from "vuex";
-import axios from "axios";
+import axios from "@/utils/axios";
 import { useRouter } from 'vue-router';
 export default {
   name: "SetAdminModal",
