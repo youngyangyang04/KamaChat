@@ -55,10 +55,10 @@ func (u *userInfoService) checkUserIsAdminOrNot(user model.UserInfo) int8 {
 func (u *userInfoService) Login(loginReq request.LoginRequest) (string, *respond.LoginRespond, int) {
 	password := loginReq.Password
 	var user model.UserInfo
-	res := dao.GormDB.First(&user, "telephone = ?", loginReq.Telephone)
+	res := dao.GormDB.First(&user, "account = ?", loginReq.Account)
 	if res.Error != nil {
 		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-			message := "用户不存在，请注册"
+			message := "账号不存在，请注册"
 			zlog.Error(message)
 			return message, nil, -2
 		}
@@ -73,7 +73,7 @@ func (u *userInfoService) Login(loginReq request.LoginRequest) (string, *respond
 
 	loginRsp := &respond.LoginRespond{
 		Uuid:      user.Uuid,
-		Telephone: user.Telephone,
+		Account:   user.Account,
 		Nickname:  user.Nickname,
 		Email:     user.Email,
 		Avatar:    user.Avatar,
@@ -122,7 +122,7 @@ func (u *userInfoService) SmsLogin(req request.SmsLoginRequest) (string, *respon
 
 	loginRsp := &respond.LoginRespond{
 		Uuid:      user.Uuid,
-		Telephone: user.Telephone,
+		Account:   user.Account,
 		Nickname:  user.Nickname,
 		Email:     user.Email,
 		Avatar:    user.Avatar,
@@ -159,58 +159,50 @@ func (u *userInfoService) checkTelephoneExist(telephone string) (string, int) {
 	return "该电话已经存在，注册失败", -2
 }
 
+// checkAccountExist 检查账号是否存在
+func (u *userInfoService) checkAccountExist(account string) (string, int) {
+	var user model.UserInfo
+	if res := dao.GormDB.Where("account = ?", account).First(&user); res.Error != nil {
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			zlog.Info("该账号不存在，可以注册")
+			return "", 0
+		}
+		zlog.Error(res.Error.Error())
+		return constants.SYSTEM_ERROR, -1
+	}
+	message := "该账号已被注册"
+	zlog.Info(message)
+	return message, -2
+}
+
 // Register 注册，返回(message, register_respond_string, error)
 func (u *userInfoService) Register(registerReq request.RegisterRequest) (string, *respond.RegisterRespond, int) {
-	key := "auth_code_" + registerReq.Telephone
-	code, err := myredis.GetKey(key)
-	if err != nil {
-		zlog.Error(err.Error())
-		return constants.SYSTEM_ERROR, nil, -1
-	}
-	if code != registerReq.SmsCode {
-		message := "验证码不正确，请重试"
-		zlog.Info(message)
-		return message, nil, -2
-	} else {
-		if err := myredis.DelKeyIfExists(key); err != nil {
-			zlog.Error(err.Error())
-			return constants.SYSTEM_ERROR, nil, -1
-		}
-	}
-	// 不用校验手机号，前端校验
-	// 判断电话是否已经被注册过了
-	message, ret := u.checkTelephoneExist(registerReq.Telephone)
+	// 检查账号是否已存在
+	message, ret := u.checkAccountExist(registerReq.Account)
 	if ret != 0 {
 		return message, nil, ret
 	}
+
+	// 创建新用户
 	var newUser model.UserInfo
 	newUser.Uuid = "U" + random.GetNowAndLenRandomString(11)
-	newUser.Telephone = registerReq.Telephone
-	newUser.Password = registerReq.Password
+	newUser.Account = registerReq.Account
 	newUser.Nickname = registerReq.Nickname
+	newUser.Password = registerReq.Password
 	newUser.Avatar = "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
 	newUser.CreatedAt = time.Now()
-	newUser.IsAdmin = u.checkUserIsAdminOrNot(newUser)
+	newUser.IsAdmin = 0
 	newUser.Status = user_status_enum.NORMAL
-	// 手机号验证，最后一步才调用api，省钱hhh
-	//err := sms.VerificationCode(registerReq.Telephone)
-	//if err != nil {
-	//	zlog.Error(err.Error())
-	//	return "", err
-	//}
 
 	res := dao.GormDB.Create(&newUser)
 	if res.Error != nil {
 		zlog.Error(res.Error.Error())
 		return constants.SYSTEM_ERROR, nil, -1
 	}
-	// 注册成功，chat client建立
-	//if err := chat.NewClientInit(c, newUser.Uuid); err != nil {
-	//	return "", err
-	//}
+
 	registerRsp := &respond.RegisterRespond{
-		Uuid:      newUser.Uuid,
-		Telephone: newUser.Telephone,
+		Uuid:    newUser.Uuid,
+		Account: newUser.Account,
 		Nickname:  newUser.Nickname,
 		Email:     newUser.Email,
 		Avatar:    newUser.Avatar,

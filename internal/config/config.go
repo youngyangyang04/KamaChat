@@ -8,9 +8,12 @@ import (
 )
 
 type MainConfig struct {
-	AppName string `toml:"appName"`
-	Host    string `toml:"host"`
-	Port    int    `toml:"port"`
+	AppName     string `toml:"appName"`
+	Host        string `toml:"host"`
+	Port        int    `toml:"port"`
+	EnableHTTPS bool   `toml:"enableHTTPS"`
+	CertFile    string `toml:"certFile"`
+	KeyFile     string `toml:"keyFile"`
 }
 
 type PostgresqlConfig struct {

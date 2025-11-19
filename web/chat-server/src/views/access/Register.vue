@@ -14,6 +14,25 @@
         class="demo-dynamic"
       >
         <el-form-item
+          prop="account"
+          label="账号"
+          :rules="[
+            {
+              required: true,
+              message: '此项为必填项',
+              trigger: 'blur',
+            },
+            {
+              min: 3,
+              max: 20,
+              message: '账号长度在 3 到 20 个字符',
+              trigger: 'blur',
+            },
+          ]"
+        >
+          <el-input v-model="registerData.account" placeholder="请输入账号" />
+        </el-form-item>
+        <el-form-item
           prop="nickname"
           label="昵称"
           :rules="[
@@ -23,27 +42,14 @@
               trigger: 'blur',
             },
             {
-              min: 3,
-              max: 10,
-              message: '昵称长度在 3 到 10 个字符',
+              min: 1,
+              max: 20,
+              message: '昵称长度在 1 到 20 个字符',
               trigger: 'blur',
             },
           ]"
         >
-          <el-input v-model="registerData.nickname" />
-        </el-form-item>
-        <el-form-item
-          prop="telephone"
-          label="账号"
-          :rules="[
-            {
-              required: true,
-              message: '此项为必填项',
-              trigger: 'blur',
-            },
-          ]"
-        >
-          <el-input v-model="registerData.telephone" />
+          <el-input v-model="registerData.nickname" placeholder="请输入昵称" />
         </el-form-item>
         <el-form-item
           prop="password"
@@ -54,30 +60,15 @@
               message: '此项为必填项',
               trigger: 'blur',
             },
-          ]"
-        >
-          <el-input type="password" v-model="registerData.password" />
-        </el-form-item>
-        <el-form-item
-          prop="sms_code"
-          label="验证码"
-          :rules="[
             {
-              required: true,
-              message: '此项为必填项',
+              min: 6,
+              max: 50,
+              message: '密码长度在 6 到 50 个字符',
               trigger: 'blur',
             },
           ]"
         >
-          <el-input v-model="registerData.sms_code" style="max-width: 200px">
-            <template #append>
-              <el-button
-                @click="sendSmsCode"
-                style="background-color: rgb(229, 132, 132); color: #ffffff"
-                >点击发送</el-button
-              >
-            </template>
-          </el-input>
+          <el-input type="password" v-model="registerData.password" placeholder="请输入密码" />
         </el-form-item>
       </el-form>
       <div class="register-button-container">
@@ -86,11 +77,8 @@
         >
       </div>
       <div class="go-login-button-container">
-        <button class="go-sms-login-btn" @click="handleSmsLogin">
-          验证码登录
-        </button>
         <button class="go-password-login-btn" @click="handleLogin">
-          密码登录
+          返回登录
         </button>
       </div>
     </div>
@@ -108,10 +96,9 @@ export default {
   setup() {
     const data = reactive({
       registerData: {
-        telephone: "",
-        password: "",
+        account: "",
         nickname: "",
-        sms_code: "",
+        password: "",
       },
     });
     const router = useRouter();
@@ -119,23 +106,32 @@ export default {
     const handleRegister = async () => {
       try {
         if (
+          !data.registerData.account ||
           !data.registerData.nickname ||
-          !data.registerData.telephone ||
-          !data.registerData.password ||
-          !data.registerData.sms_code
+          !data.registerData.password
         ) {
           ElMessage.error("请填写完整注册信息。");
           return;
         }
         if (
-          data.registerData.nickname.length < 3 ||
-          data.registerData.nickname.length > 10
+          data.registerData.account.length < 3 ||
+          data.registerData.account.length > 20
         ) {
-          ElMessage.error("昵称长度在 3 到 10 个字符。");
+          ElMessage.error("账号长度在 3 到 20 个字符。");
           return;
         }
-        if (!checkTelephoneValid()) {
-          ElMessage.error("请输入有效的手机号码。");
+        if (
+          data.registerData.nickname.length < 1 ||
+          data.registerData.nickname.length > 20
+        ) {
+          ElMessage.error("昵称长度在 1 到 20 个字符。");
+          return;
+        }
+        if (
+          data.registerData.password.length < 6 ||
+          data.registerData.password.length > 50
+        ) {
+          ElMessage.error("密码长度在 6 到 50 个字符。");
           return;
         }
         const response = await axios.post(
@@ -178,47 +174,8 @@ export default {
         console.log(error);
       }
     };
-    const checkTelephoneValid = () => {
-      const regex = /^1[3456789]\d{9}$/;
-      return regex.test(data.registerData.telephone);
-    };
-
     const handleLogin = () => {
       router.push("/login");
-    };
-
-    const handleSmsLogin = () => {
-      router.push("/smsLogin");
-    };
-
-    const sendSmsCode = async () => {
-      if (
-        !data.registerData.telephone ||
-        !data.registerData.nickname ||
-        !data.registerData.password
-      ) {
-        ElMessage.error("请填写完整注册信息。");
-        return;
-      }
-      if (!checkTelephoneValid()) {
-        ElMessage.error("请输入有效的手机号码。");
-        return;
-      }
-      const req = {
-        telephone: data.registerData.telephone,
-      };
-      const rsp = await axios.post(
-        store.state.backendUrl + "/user/sendSmsCode",
-        req
-      );
-      console.log(rsp);
-      if (rsp.data.code == 200) {
-        ElMessage.success(rsp.data.message);
-      } else if (rsp.data.code == 400) {
-        ElMessage.warning(rsp.data.message);
-      } else {
-        ElMessage.error(rsp.data.message);
-      }
     };
 
     return {
@@ -226,8 +183,6 @@ export default {
       router,
       handleRegister,
       handleLogin,
-      handleSmsLogin,
-      sendSmsCode,
     };
   },
 };

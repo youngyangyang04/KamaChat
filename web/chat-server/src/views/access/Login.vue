@@ -13,7 +13,7 @@
         class="demo-dynamic"
       >
         <el-form-item
-          prop="telephone"
+          prop="account"
           label="账号"
           :rules="[
             {
@@ -23,7 +23,7 @@
             },
           ]"
         >
-          <el-input v-model="loginData.telephone" />
+          <el-input v-model="loginData.account" placeholder="请输入账号" />
         </el-form-item>
         <el-form-item
           prop="password"
@@ -36,7 +36,7 @@
             },
           ]"
         >
-          <el-input type="password" v-model="loginData.password" />
+          <el-input type="password" v-model="loginData.password" placeholder="请输入密码" />
         </el-form-item>
       </el-form>
       <div class="login-button-container">
@@ -47,7 +47,6 @@
 
       <div class="go-register-button-container">
         <button class="go-register-btn" @click="handleRegister">注册</button>
-        <button class="go-sms-btn" @click="handleSmsLogin">验证码登录</button>
       </div>
     </div>
   </div>
@@ -64,7 +63,7 @@ export default {
   setup() {
     const data = reactive({
       loginData: {
-        telephone: "",
+        account: "",
         password: "",
       },
     });
@@ -72,12 +71,8 @@ export default {
     const store = useStore();
     const handleLogin = async () => {
       try {
-        if (!data.loginData.telephone || !data.loginData.password) {
+        if (!data.loginData.account || !data.loginData.password) {
           ElMessage.error("请填写完整登录信息。");
-          return;
-        }
-        if (!checkTelephoneValid()) {
-          ElMessage.error("请输入有效的手机号码。");
           return;
         }
 	console.log(store.state.backendUrl, store.state.wsUrl);
@@ -126,15 +121,8 @@ export default {
         ElMessage.error(error);
       }
     };
-    const checkTelephoneValid = () => {
-      const regex = /^1[3456789]\d{9}$/;
-      return regex.test(data.loginData.telephone);
-    };
     const handleRegister = () => {
       router.push("/register");
-    };
-    const handleSmsLogin = () => {
-      router.push("/smsLogin");
     };
 
     return {
@@ -142,7 +130,6 @@ export default {
       router,
       handleLogin,
       handleRegister,
-      handleSmsLogin,
     };
   },
 };

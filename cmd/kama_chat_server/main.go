@@ -29,21 +29,20 @@ func main() {
 	}
 
 	go func() {
-		// 临时使用 HTTP 进行测试（不使用 TLS）
-		if err := https_server.GE.Run(fmt.Sprintf("%s:%d", host, port)); err != nil {
-			zlog.Fatal("server running fault")
-			return
+		// 根据配置决定使用 HTTP 还是 HTTPS
+		if conf.MainConfig.EnableHTTPS {
+			zlog.Info(fmt.Sprintf("启动 HTTPS 服务器在 %s:%d", host, port))
+			if err := https_server.GE.RunTLS(fmt.Sprintf("%s:%d", host, port), conf.MainConfig.CertFile, conf.MainConfig.KeyFile); err != nil {
+				zlog.Fatal("HTTPS server running fault: " + err.Error())
+				return
+			}
+		} else {
+			zlog.Info(fmt.Sprintf("启动 HTTP 服务器在 %s:%d", host, port))
+			if err := https_server.GE.Run(fmt.Sprintf("%s:%d", host, port)); err != nil {
+				zlog.Fatal("HTTP server running fault: " + err.Error())
+				return
+			}
 		}
-		// Win10本地部署
-		// if err := https_server.GE.RunTLS(fmt.Sprintf("%s:%d", host, port), "pkg/ssl/127.0.0.1+2.pem", "pkg/ssl/127.0.0.1+2-key.pem"); err != nil {
-		// 	zlog.Fatal("server running fault")
-		// 	return
-		// }
-		// Ubuntu22.04云服务器部署
-		// if err := https_server.GE.RunTLS(fmt.Sprintf("%s:%d", host, port), "/etc/ssl/certs/server.crt", "/etc/ssl/private/server.key"); err != nil {
-		// 	zlog.Fatal("server running fault")
-		// 	return
-		// }
 	}()
 
 	// 设置信号监听

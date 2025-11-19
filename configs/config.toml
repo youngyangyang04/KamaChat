@@ -1,7 +1,10 @@
 [mainConfig]
 appName = "wework"
 host = "0.0.0.0"
-port = 8000
+port = 8888
+enableHTTPS = false  # 是否启用 HTTPS，false 为 HTTP 模式
+certFile = "pkg/ssl/127.0.0.1+2.pem"  # HTTPS 证书文件路径
+keyFile = "pkg/ssl/127.0.0.1+2-key.pem"  # HTTPS 私钥文件路径
 
 [postgresqlConfig]
 host = "127.0.0.1"

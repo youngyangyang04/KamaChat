@@ -9,3 +9,15 @@
 {"level":"info","ts":"2025-11-18T21:42:26.822+0800","msg":"完整DSN：host=127.0.0.1 user=postgres dbname=wework port=5432 sslmode=disable TimeZone=Asia/Shanghai","func":"dao.init.0","file":"D:/codes/go/wework-reborn/internal/dao/gorm.go","line":35}
 {"level":"info","ts":"2025-11-18T21:42:26.832+0800","msg":"已连接到数据库：wework","func":"dao.init.0","file":"D:/codes/go/wework-reborn/internal/dao/gorm.go","line":46}
 {"level":"info","ts":"2025-11-18T21:42:33.433+0800","msg":"关闭服务器...","func":"main.main","file":"D:/codes/go/wework-reborn/cmd/kama_chat_server/main.go","line":62}
+{"level":"info","ts":"2025-11-18T23:19:23.459+0800","msg":"关闭服务器...","func":"main.main","file":"D:/codes/go/wework-reborn/cmd/kama_chat_server/main.go","line":62}
+{"level":"fatal","ts":"2025-11-19T14:13:46.331+0800","msg":"server running fault","func":"main.main.func1","file":"D:/codes/go/wework-reborn/cmd/kama_chat_server/main.go","line":34}
+{"level":"fatal","ts":"2025-11-19T14:14:50.342+0800","msg":"server running fault","func":"main.main.func1","file":"D:/codes/go/wework-reborn/cmd/kama_chat_server/main.go","line":34}
+{"level":"fatal","ts":"2025-11-19T14:15:55.498+0800","msg":"server running fault","func":"main.main.func1","file":"D:/codes/go/wework-reborn/cmd/kama_chat_server/main.go","line":34}
+{"level":"fatal","ts":"2025-11-19T14:28:48.590+0800","msg":"redirecting to HTTPS","func":"https_server.init.0.TlsHandler.func1","file":"D:/codes/go/wework-reborn/pkg/ssl/tls_handler.go","line":20}
+{"level":"fatal","ts":"2025-11-19T14:29:07.870+0800","msg":"redirecting to HTTPS","func":"https_server.init.0.TlsHandler.func1","file":"D:/codes/go/wework-reborn/pkg/ssl/tls_handler.go","line":20}
+{"level":"info","ts":"2025-11-19T14:33:24.717+0800","msg":"启动 HTTP 服务器在 0.0.0.0:8888","func":"main.main.func1","file":"D:/codes/go/wework-reborn/cmd/kama_chat_server/main.go","line":40}
+{"level":"info","ts":"2025-11-19T14:33:31.187+0800","msg":"该账号不存在，可以注册","func":"gorm.(*userInfoService).checkAccountExist","file":"D:/codes/go/wework-reborn/internal/service/gorm/user_info_service.go","line":167}
+{"level":"info","ts":"2025-11-19T14:33:31.194+0800","msg":"ws read goroutine start","func":"chat.(*Client).Read","file":"D:/codes/go/wework-reborn/internal/service/chat/client.go","line":49}
+{"level":"info","ts":"2025-11-19T14:33:31.194+0800","msg":"ws write goroutine start","func":"chat.(*Client).Write","file":"D:/codes/go/wework-reborn/internal/service/chat/client.go","line":95}
+{"level":"info","ts":"2025-11-19T14:33:31.194+0800","msg":"ws连接成功","func":"chat.NewClientInit","file":"D:/codes/go/wework-reborn/internal/service/chat/client.go","line":131}
+{"level":"debug","ts":"2025-11-19T14:33:31.194+0800","msg":"欢迎来到kama聊天服务器，亲爱的用户U2025111953525220360\n","func":"chat.(*Server).Start","file":"D:/codes/go/wework-reborn/internal/service/chat/server.go","line":76}
