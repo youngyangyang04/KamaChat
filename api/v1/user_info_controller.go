@@ -2,12 +2,13 @@ package v1
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"kama_chat_server/internal/dto/request"
 	"kama_chat_server/internal/service/gorm"
 	"kama_chat_server/pkg/constants"
 	"kama_chat_server/pkg/zlog"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Register 注册
@@ -23,6 +24,23 @@ func Register(c *gin.Context) {
 	}
 	fmt.Println(registerReq)
 	message, userInfo, ret := gorm.UserInfoService.Register(registerReq)
+	JsonBack(c, message, ret, userInfo)
+}
+
+// RegisterWithCrypto 注册（带加密密钥）
+func RegisterWithCrypto(c *gin.Context) {
+	var registerReq request.RegisterCryptoRequest
+	if err := c.BindJSON(&registerReq); err != nil {
+		zlog.Error("参数绑定失败: " + err.Error())
+		c.JSON(http.StatusOK, gin.H{
+			"code":    500,
+			"message": "参数错误: " + err.Error(),
+		})
+		return
+	}
+
+	zlog.Info(fmt.Sprintf("用户注册（加密）: %s", registerReq.Account))
+	message, userInfo, ret := gorm.UserInfoService.RegisterWithCrypto(registerReq)
 	JsonBack(c, message, ret, userInfo)
 }
 

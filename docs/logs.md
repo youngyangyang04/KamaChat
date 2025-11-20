@@ -1,5 +1,108 @@
 ## 修改日志
 
+### 2025-11-19 - 实现单聊端到端加密核心功能（阶段1-3完成）
+
+#### 数据库层
+- 创建数据库迁移脚本 `migrations/001_add_e2ee_support.sql`
+- 创建 Go models：`OneTimePreKey`, `KeyReplenishmentLog`
+
+#### 后端服务层
+- 创建公钥管理服务：`internal/service/gorm/crypto_key_service.go`
+- 创建加密 API 控制器：`api/v1/crypto_key.go`
+- 注册路由：
+  - `GET /crypto/getPublicKeyBundle`：获取公钥束
+  - `GET /crypto/getOneTimePreKeyCount`：查询剩余密钥
+  - `POST /crypto/replenishOneTimePreKeys`：补充密钥
+  - `POST /crypto/rotateSignedPreKey`：轮换签名预密钥
+
+#### 前端加密模块（完整实现）
+- **基础设施**：
+  - `crypto/keyDerivation.js`：PBKDF2 主密钥派生、AES-GCM 加密
+  - `crypto/keyGeneration.js`：Ed25519/Curve25519 密钥生成
+  - `crypto/cryptoStore.js`：IndexedDB 封装（5个存储）
+  - `crypto/keyManager.js`：统一密钥管理接口
+- **核心协议**：
+  - `crypto/x3dh.js`：X3DH 密钥协商协议（会话建立）
+  - `crypto/doubleRatchet.js`：双棘轮算法（消息加密）
+  - `crypto/sessionManager.js`：会话管理器（整合所有功能）
+- **统一导出**：
+  - `crypto/index.js`：统一导出所有加密API
+
+#### 依赖
+- 添加 `tweetnacl@1.0.3`（前端加密库）✅
+
+### 2025-11-19 - 集成注册/登录流程支持加密
+
+#### 后端集成
+- 修改 `internal/service/gorm/user_info_service.go`：
+  - 新增 `RegisterWithCrypto` 函数（使用事务保存用户和密钥）
+  - 保持原有 `Register` 函数向后兼容
+- 新增控制器 `RegisterWithCrypto` in `api/v1/user_info_controller.go`
+- 注册路由 `POST /registerWithCrypto`
+
+#### 前端集成
+- 修改 `web/chat-server/src/views/access/Register.vue`：
+  - 调用 `initializeUserKeys` 生成加密密钥（100 个 OTP 密钥）
+  - 调用 `/registerWithCrypto` 接口上传公钥
+  - 注册成功后重新派生主密钥保存到内存
+- 修改 `web/chat-server/src/views/access/Login.vue`：
+  - 登录成功后尝试重新派生主密钥
+  - 支持加密和非加密用户无缝切换
+- 修改 `web/chat-server/src/store/index.js`：
+  - 新增 `masterKey` state（仅内存，不持久化）
+  - 新增 `setMasterKey` mutation
+  - 修改 `cleanUserInfo` mutation 清除主密钥
+
+#### 特性
+- ✅ 新用户注册自动启用加密
+- ✅ 旧用户登录保持普通模式（向后兼容）
+- ✅ 主密钥仅存储在内存，退出登录自动清除（安全）
+- ✅ 事务保证用户创建和密钥保存的原子性
+
+### 2025-11-19 - 集成消息加密/解密功能（阶段4-5完成）
+
+#### 后端集成
+- 创建加密消息 API：`api/v1/encrypted_message.go`
+  - `POST /message/sendEncryptedMessage`：发送加密消息
+- 修改 `internal/model/message.go`：添加加密相关字段（11个新字段）
+- 修改 `internal/model/user_info.go`：添加加密公钥字段（6个新字段）
+- 修改 `internal/service/gorm/message_service.go`：GetMessageList 返回加密字段
+- 修改 `internal/dto/respond/get_message_list_respond.go`：响应包含加密字段
+- 创建 DTO：`send_encrypted_message_request.go`
+- 注册路由：`POST /message/sendEncryptedMessage`
+- 更新 `internal/dao/gorm.go`：AutoMigrate 包含新 model
+
+#### 前端集成
+- 创建消息解密工具：`web/chat-server/src/utils/messageDecryptor.js`
+  - `decryptMessage`：解密单条消息
+  - `decryptMessageList`：批量解密消息列表
+  - 自动处理 PreKeyMessage 会话建立
+- 修改 `web/chat-server/src/views/chat/contact/ContactChat.vue`：
+  - 导入加密模块
+  - `sendMessage` 函数：检测加密状态，自动选择加密/明文发送
+  - `sendEncryptedMessage` 函数：完整的加密发送流程
+    - 检查会话存在性
+    - 首次会话：获取公钥束、建立会话（X3DH）
+    - 加密消息（双棘轮）
+    - 发送到服务器
+  - `getMessageList` 函数：获取后自动解密
+  - UI 添加 🔒 加密状态指示器
+
+#### 数据库迁移
+- 执行 `migrations/001_add_e2ee_support.sql`
+- 创建表：`one_time_pre_keys`, `key_replenishment_log`
+- 扩展表：`user_info` (6字段), `message` (11字段)
+- 创建索引：加密消息查询优化
+
+#### 功能特性
+- ✅ 自动检测加密状态（有主密钥则加密）
+- ✅ 首次会话自动建立（X3DH 协议）
+- ✅ 消息自动加密/解密（双棘轮算法）
+- ✅ 向后兼容明文消息
+- ✅ UI 显示加密状态（🔒 图标）
+- ✅ 批量解密历史消息
+- ✅ 服务器无法看到明文（端到端加密）
+
 ### 2025-11-18 - 数据库从 MySQL 迁移到 PostgreSQL
 - 修改 `configs/config.toml`：配置改为 PostgreSQL（端口 5432，用户 postgres，空密码）
 - 修改 `internal/config/config.go`：`MysqlConfig` → `PostgresqlConfig`，配置加载路径改为本地

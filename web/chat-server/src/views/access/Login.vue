@@ -58,6 +58,8 @@ import axios from "@/utils/axios";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useStore } from "vuex";
+import { loginAndDeriveMasterKey } from "@/crypto";
+
 export default {
   name: "Login",
   setup() {
@@ -84,7 +86,22 @@ export default {
             return;
           }
           try {
-            ElMessage.success(response.data.message);
+            // 尝试重新派生主密钥（如果用户启用了加密）
+            try {
+              const masterKey = await loginAndDeriveMasterKey(data.loginData.password);
+              if (masterKey) {
+                store.commit("setMasterKey", masterKey);
+                console.log("主密钥已重新派生并保存到内存（加密功能已启用）");
+                ElMessage.success(response.data.message + " (端到端加密已启用)");
+              } else {
+                console.log("主密钥验证失败，可能未启用加密或密码错误");
+                ElMessage.success(response.data.message);
+              }
+            } catch (error) {
+              console.log("未找到加密密钥，使用普通模式:", error.message);
+              ElMessage.success(response.data.message);
+            }
+
             if (!response.data.data.avatar.startsWith("http")) {
               response.data.data.avatar =
                 store.state.backendUrl + response.data.data.avatar;

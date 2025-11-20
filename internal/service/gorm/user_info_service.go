@@ -98,7 +98,7 @@ func (u *userInfoService) Login(loginReq request.LoginRequest) (string, *respond
 	year, month, day := user.CreatedAt.Date()
 	loginRsp.CreatedAt = fmt.Sprintf("%d.%d.%d", year, month, day)
 
-	return "登陆成功", loginRsp, 0
+	return "登录成功", loginRsp, 0
 }
 
 // SmsLogin 验证码登录
@@ -243,6 +243,90 @@ func (u *userInfoService) Register(registerReq request.RegisterRequest) (string,
 	year, month, day := newUser.CreatedAt.Date()
 	registerRsp.CreatedAt = fmt.Sprintf("%d.%d.%d", year, month, day)
 
+	return "注册成功", registerRsp, 0
+}
+
+// RegisterWithCrypto 注册（带加密密钥），返回(message, register_respond_string, error)
+func (u *userInfoService) RegisterWithCrypto(registerReq request.RegisterCryptoRequest) (string, *respond.RegisterRespond, int) {
+	// 检查账号是否已存在
+	message, ret := u.checkAccountExist(registerReq.Account)
+	if ret != 0 {
+		return message, nil, ret
+	}
+
+	// 创建新用户
+	var newUser model.UserInfo
+	newUser.Uuid = "U" + random.GetNowAndLenRandomString(11)
+	newUser.Account = registerReq.Account
+	newUser.Nickname = registerReq.Nickname
+
+	// 加密密码
+	hashedPassword, err := password.HashPassword(registerReq.Password)
+	if err != nil {
+		zlog.Error("密码加密失败: " + err.Error())
+		return constants.SYSTEM_ERROR, nil, -1
+	}
+	newUser.Password = hashedPassword
+
+	newUser.Avatar = "https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
+	newUser.CreatedAt = time.Now()
+	newUser.IsAdmin = 0
+	newUser.Status = user_status_enum.NORMAL
+
+	// 使用事务确保用户创建和密钥保存的原子性
+	tx := dao.GormDB.Begin()
+	if tx.Error != nil {
+		zlog.Error("开始事务失败: " + tx.Error.Error())
+		return constants.SYSTEM_ERROR, nil, -1
+	}
+
+	// 创建用户
+	if err := tx.Create(&newUser).Error; err != nil {
+		tx.Rollback()
+		zlog.Error("创建用户失败: " + err.Error())
+		return constants.SYSTEM_ERROR, nil, -1
+	}
+
+	// 保存加密公钥（在同一事务中）
+	// 直接传入事务实例，避免修改全局变量
+	err = CryptoKeyService.SaveUserPublicKeys(newUser.Uuid, &registerReq, tx)
+
+	if err != nil {
+		tx.Rollback()
+		zlog.Error("保存加密密钥失败: " + err.Error())
+		return "保存加密密钥失败", nil, -1
+	}
+
+	// 提交事务
+	if err := tx.Commit().Error; err != nil {
+		zlog.Error("提交事务失败: " + err.Error())
+		return constants.SYSTEM_ERROR, nil, -1
+	}
+
+	// 生成 JWT token
+	token, err := jwtutil.GenerateToken(newUser.Uuid, newUser.Account, newUser.Nickname, newUser.IsAdmin)
+	if err != nil {
+		zlog.Error("生成 token 失败: " + err.Error())
+		return constants.SYSTEM_ERROR, nil, -1
+	}
+
+	registerRsp := &respond.RegisterRespond{
+		Token:     token,
+		Uuid:      newUser.Uuid,
+		Account:   newUser.Account,
+		Nickname:  newUser.Nickname,
+		Email:     newUser.Email,
+		Avatar:    newUser.Avatar,
+		Gender:    newUser.Gender,
+		Birthday:  newUser.Birthday,
+		Signature: newUser.Signature,
+		IsAdmin:   newUser.IsAdmin,
+		Status:    newUser.Status,
+	}
+	year, month, day := newUser.CreatedAt.Date()
+	registerRsp.CreatedAt = fmt.Sprintf("%d.%d.%d", year, month, day)
+
+	zlog.Info("用户注册成功（带加密）: " + newUser.Account)
 	return "注册成功", registerRsp, 0
 }
 

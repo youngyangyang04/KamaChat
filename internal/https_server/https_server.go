@@ -32,6 +32,7 @@ func init() {
 	// 无需认证的路由
 	GE.POST("/login", v1.Login)
 	GE.POST("/register", v1.Register)
+	GE.POST("/registerWithCrypto", v1.RegisterWithCrypto) // 带加密密钥的注册
 
 	// 需要认证的路由组
 	auth := GE.Group("/")
@@ -81,7 +82,15 @@ func init() {
 		auth.POST("message/getGroupMessageList", v1.GetGroupMessageList)
 		auth.POST("message/uploadAvatar", v1.UploadAvatar)
 		auth.POST("message/uploadFile", v1.UploadFile)
+		auth.POST("message/sendEncryptedMessage", v1.SendEncryptedMessage)
 		auth.POST("chatroom/getCurContactListInChatRoom", v1.GetCurContactListInChatRoom)
+
+		// 加密相关接口
+		auth.GET("crypto/getPublicKeyBundle", v1.GetPublicKeyBundle)
+		auth.GET("crypto/getOneTimePreKeyCount", v1.GetOneTimePreKeyCount)
+		auth.POST("crypto/replenishOneTimePreKeys", v1.ReplenishOneTimePreKeys)
+		auth.POST("crypto/rotateSignedPreKey", v1.RotateSignedPreKey)
+
 		auth.GET("wss", v1.WsLogin)
 	}
 

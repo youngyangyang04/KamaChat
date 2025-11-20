@@ -25,6 +25,15 @@ type UserInfo struct {
 	LastOfflineAt sql.NullTime   `gorm:"column:last_offline_at;type:timestamp;comment:最近离线时间"`
 	IsAdmin       int8           `gorm:"column:is_admin;not null;comment:是否是管理员，0.不是，1.是"`
 	Status        int8           `gorm:"column:status;index;not null;comment:状态，0.正常，1.禁用"`
+
+	// 加密相关字段
+	IdentityKeyPublic           string       `gorm:"column:identity_key_public;type:text;comment:身份公钥（Ed25519）"`
+	IdentityKeyPublicCurve25519 string       `gorm:"column:identity_key_public_curve25519;type:text;comment:身份公钥（Curve25519，用于ECDH）"`
+	SignedPreKeyId              int          `gorm:"column:signed_pre_key_id;default:1;comment:签名预密钥ID"`
+	SignedPreKeyPublic          string       `gorm:"column:signed_pre_key_public;type:text;comment:签名预公钥（Curve25519）"`
+	SignedPreKeySignature       string       `gorm:"column:signed_pre_key_signature;type:text;comment:签名预公钥的签名"`
+	SignedPreKeyTimestamp       sql.NullTime `gorm:"column:signed_pre_key_timestamp;type:timestamp;comment:签名预密钥生成时间"`
+	KeyGeneration               int          `gorm:"column:key_generation;default:1;comment:密钥代数"`
 }
 
 func (UserInfo) TableName() string {

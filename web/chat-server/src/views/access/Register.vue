@@ -91,6 +91,8 @@ import axios from "@/utils/axios";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useStore } from "vuex";
+import { initializeUserKeys, loginAndDeriveMasterKey } from "@/crypto";
+
 export default {
   name: "Register",
   setup() {
@@ -134,10 +136,37 @@ export default {
           ElMessage.error("密码长度在 6 到 50 个字符。");
           return;
         }
-        const response = await axios.post("/register", data.registerData);
+
+        // 显示加载提示
+        ElMessage.info("正在生成加密密钥，请稍候...");
+
+        // 生成加密密钥
+        let cryptoKeys;
+        try {
+          cryptoKeys = await initializeUserKeys(data.registerData.password);
+          console.log("加密密钥生成成功");
+        } catch (error) {
+          console.error("生成加密密钥失败:", error);
+          ElMessage.error("生成加密密钥失败: " + error.message);
+          return;
+        }
+
+        // 调用带加密的注册接口
+        const response = await axios.post("/registerWithCrypto", {
+          ...data.registerData,
+          ...cryptoKeys,
+        });
         if (response.data.code == 200) {
-          ElMessage.success(response.data.message);
+          ElMessage.success(response.data.message + " (端到端加密已启用)");
           console.log(response.data.message);
+
+          // 重新派生主密钥并保存到内存
+          const masterKey = await loginAndDeriveMasterKey(data.registerData.password);
+          if (masterKey) {
+            store.commit("setMasterKey", masterKey);
+            console.log("主密钥已保存到内存");
+          }
+
           // 查看avatar前缀有没有http
           if (!response.data.data.avatar.startsWith("http")) {
             response.data.data.avatar =

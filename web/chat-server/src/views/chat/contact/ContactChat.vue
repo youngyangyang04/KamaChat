@@ -549,6 +549,7 @@
                       </div>
 
                       <div class="left-message-content">
+                        <span v-if="messageItem.is_encrypted" style="color: #67c23a; font-size: 12px; margin-right: 4px;">🔒</span>
                         {{ messageItem.content }}
                       </div>
                     </div>
@@ -650,6 +651,7 @@
                         </div>
                         <div style="display: flex; flex-direction: row-reverse">
                           <div class="right-message-content">
+                            <span v-if="messageItem.is_encrypted" style="color: #67c23a; font-size: 12px; margin-right: 4px;">🔒</span>
                             {{ messageItem.content }}
                           </div>
                         </div>
@@ -950,6 +952,13 @@ import SmallModal from "@/components/SmallModal.vue";
 import NavigationModal from "@/components/NavigationModal.vue";
 import { ElMessage, ElMessageBox, ElScrollbar } from "element-plus";
 import { ElNotification } from "element-plus";
+import {
+  hasSession,
+  createSession,
+  encryptAndSendMessage,
+  receiveAndDecryptMessage,
+} from "@/crypto";
+import { decryptMessageList } from "@/utils/messageDecryptor";
 export default {
   name: "ContactChat",
   components: {
@@ -1505,7 +1514,7 @@ export default {
       }
       router.push("/chat/sessionlist");
     };
-    const sendMessage = () => {
+    const sendMessage = async () => {
       // 检查消息内容
       if (!data.chatMessage || data.chatMessage.trim() === "") {
         console.log("消息内容为空，不发送");
@@ -1537,6 +1546,20 @@ export default {
 
       console.log("准备发送消息：", data.chatMessage);
 
+      // 检查是否启用了加密
+      if (store.state.masterKey && data.contactInfo.contact_id.startsWith('U')) {
+        // 启用了加密，且是单聊（不是群聊）
+        try {
+          await sendEncryptedMessage();
+          return;
+        } catch (error) {
+          console.error("加密消息发送失败：", error);
+          ElMessage.error("加密消息发送失败：" + error.message);
+          return;
+        }
+      }
+
+      // 未启用加密，使用原有的明文发送
       const chatMessageRequest = {
         session_id: data.sessionId,
         type: 0,
@@ -1552,7 +1575,7 @@ export default {
       };
 
       try {
-        console.log("发送消息请求：", chatMessageRequest);
+        console.log("发送消息请求（明文）：", chatMessageRequest);
         store.state.socket.send(JSON.stringify(chatMessageRequest));
         console.log("消息已发送");
         data.chatMessage = "";
@@ -1560,6 +1583,148 @@ export default {
       } catch (error) {
         console.error("发送消息失败：", error);
         ElMessage.error("发送消息失败：" + error.message);
+      }
+    };
+
+    // 发送加密消息
+    const sendEncryptedMessage = async () => {
+      const contactId = data.contactInfo.contact_id;
+      const plaintext = data.chatMessage;
+
+      console.log("🔒 准备发送加密消息...");
+
+      // 1. 检查会话是否存在
+      const sessionExists = await hasSession(contactId);
+      let isPreKeyMessage = false;
+      let initData = null;
+
+      if (!sessionExists) {
+        console.log("会话不存在，正在建立加密会话...");
+        ElMessage.info("正在建立安全连接...");
+
+        // 2. 获取对方的公钥束
+        try {
+          const response = await axios.get("/crypto/getPublicKeyBundle", {
+            params: { user_id: contactId },
+          });
+
+          if (response.data.code !== 200) {
+            throw new Error(response.data.message || "获取公钥束失败");
+          }
+
+          const publicKeyBundle = response.data.data;
+          console.log("获取到公钥束:", publicKeyBundle);
+
+          // 3. 建立会话
+          initData = await createSession(
+            store.state.masterKey,
+            contactId,
+            publicKeyBundle
+          );
+          isPreKeyMessage = true;
+          console.log("✅ 加密会话已建立");
+        } catch (error) {
+          console.error("建立加密会话失败:", error);
+          if (error.message.includes("未启用加密功能")) {
+            ElMessage.warning("对方未启用加密功能，将发送明文消息");
+            // Fallback 到明文发送（调用原有逻辑）
+            // 这里简化处理，抛出错误让用户重试
+          }
+          throw error;
+        }
+      }
+
+      // 4. 加密消息
+      const encryptedMessage = await encryptAndSendMessage(contactId, plaintext);
+      console.log("消息已加密:", encryptedMessage);
+
+      // 5. 构造请求数据
+      const requestData = {
+        session_id: data.sessionId,
+        receiver_id: contactId,
+        message_type: isPreKeyMessage ? "PreKeyMessage" : "SignalMessage",
+        ...encryptedMessage,
+      };
+
+      // 如果是 PreKeyMessage，添加初始化数据
+      if (isPreKeyMessage && initData) {
+        requestData.sender_identity_key = initData.identity_key;
+        requestData.sender_identity_key_curve25519 = initData.identity_key_curve25519; // Curve25519 格式的身份公钥
+        requestData.sender_ephemeral_key = initData.ephemeral_key;
+        // 确保 used_one_time_pre_key_id 被正确传递（即使是 null 也要传递）
+        requestData.used_one_time_pre_key_id = initData.used_one_time_pre_key_id !== undefined 
+          ? initData.used_one_time_pre_key_id 
+          : initData.usedOneTimePreKeyId; // 兼容两种命名
+        console.log('📤 PreKeyMessage 初始化数据:', {
+          has_identity_key: !!requestData.sender_identity_key,
+          has_identity_key_curve25519: !!requestData.sender_identity_key_curve25519,
+          has_ephemeral_key: !!requestData.sender_ephemeral_key,
+          used_one_time_pre_key_id: requestData.used_one_time_pre_key_id,
+        });
+      }
+
+      // 6. 发送到服务器
+      console.log("发送加密消息到服务器...");
+      console.log("📤 发送的请求数据:", {
+        ciphertext_length: requestData.ciphertext?.length,
+        ciphertext_preview: requestData.ciphertext?.substring(0, 20),
+        iv_length: requestData.iv?.length,
+        auth_tag_length: requestData.auth_tag?.length,
+        ratchet_key_length: requestData.ratchet_key?.length,
+      });
+      const response = await axios.post("/message/sendEncryptedMessage", requestData);
+
+      if (response.data.code === 200) {
+        console.log("✅ 加密消息发送成功");
+        
+        // 保存发送方的明文到 IndexedDB（仅发送方可见，用于历史记录）
+        // 注意：后端可能返回带尾随空格的 UUID，需要 trim
+        let messageId = response.data.data?.message_id;
+        if (messageId) {
+          messageId = messageId.trim(); // 去除首尾空格
+        }
+        console.log('📝 尝试保存发送方明文，messageId:', messageId, 'plaintext:', plaintext);
+        if (messageId && store.state.masterKey) {
+          try {
+            const { put, STORES } = await import('@/crypto/cryptoStore');
+            // 使用消息 ID 作为 key，存储明文
+            const sentMessageData = {
+              message_id: messageId,
+              plaintext: plaintext,
+              contact_id: contactId,
+              created_at: Date.now(),
+            };
+            await put(STORES.SENT_MESSAGES, sentMessageData);
+            console.log('✅ 已保存发送方的明文到 IndexedDB:', {
+              message_id: messageId,
+              plaintext_length: plaintext.length,
+              plaintext_preview: plaintext.substring(0, 20),
+            });
+            
+            // 验证保存是否成功
+            const { get } = await import('@/crypto/cryptoStore');
+            const saved = await get(STORES.SENT_MESSAGES, messageId);
+            if (saved) {
+              console.log('✅ 验证：IndexedDB 中已存在该消息的明文');
+            } else {
+              console.warn('⚠️ 验证失败：IndexedDB 中未找到该消息的明文');
+            }
+          } catch (error) {
+            console.error('❌ 保存发送方明文失败:', error);
+            // 不影响消息发送，只是历史记录可能无法显示
+          }
+        } else {
+          console.warn('⚠️ 无法保存发送方明文:', {
+            has_messageId: !!messageId,
+            has_masterKey: !!store.state.masterKey,
+          });
+        }
+        
+        // TODO: 通过 WebSocket 通知对方
+        data.chatMessage = "";
+        scrollToBottom();
+      } else {
+        throw new Error(response.data.message || "发送失败");
       }
     };
 
@@ -1610,7 +1775,7 @@ export default {
         };
         console.log(req);
         const rsp = await axios.post(
-          store.state.backendUrl + "/message/getMessageList",
+          "/message/getMessageList",
           req
         );
         if (rsp.data.data) {
@@ -1619,6 +1784,15 @@ export default {
               rsp.data.data[i].send_avatar =
                 store.state.backendUrl + rsp.data.data[i].send_avatar;
             }
+          }
+
+          // 解密加密消息
+          try {
+            rsp.data.data = await decryptMessageList(rsp.data.data);
+            console.log('消息列表解密完成');
+          } catch (error) {
+            console.error('消息解密失败:', error);
+            // 不阻断，继续显示消息（可能是明文或解密失败的提示）
           }
         }
         data.messageList = rsp.data.data;
