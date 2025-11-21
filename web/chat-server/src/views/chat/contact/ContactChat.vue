@@ -2872,7 +2872,7 @@ h3 {
 }
 
 .left-message-content {
-  background-color: rgb(239, 255, 174);
+  background-color: #ffffff;
   color: rgb(74, 72, 72);
   display: inline-block;
   max-width: 400px;
@@ -2882,7 +2882,8 @@ h3 {
   padding: 3px;
   padding-right: 5px;
   font-size: 14px;
-  box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.2);
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .right-message-content {
