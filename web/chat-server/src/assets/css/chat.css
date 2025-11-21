@@ -250,21 +250,32 @@
     box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
 }
 
-/* 优化 el-sub-menu 样式（"用户"和"群聊"标题） */
+/* 优化 el-sub-menu 样式（"联系人"、"我创建的群聊"等标题） */
 .el-sub-menu__title {
-    background-color: #ffffff !important;
+    background-color: #f3f4f6 !important;
     border-radius: 8px;
     margin: 4px 8px;
     padding: 0 20px !important;
     transition: all 0.2s ease;
-    color: #374151 !important;
+    color: #1f2937 !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    height: 40px !important;
+    line-height: 40px !important;
 }
 
 .el-sub-menu__title:hover {
-    background-color: #f3f4f6 !important;
+    background-color: #e5e7eb !important;
 }
 
 .el-sub-menu.is-active > .el-sub-menu__title {
     color: #4facfe !important;
+    background-color: #eff6ff !important;
+}
+
+/* 优化子菜单项（联系人项如"Bob"）的缩进和样式 */
+.el-menu-item {
+    margin-left: 20px !important;
+    margin-right: 8px !important;
 }
 

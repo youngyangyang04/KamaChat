@@ -935,7 +935,9 @@ export default {
   height: 48px;
   border-radius: 8px;
   margin: 4px 8px;
+  margin-left: 20px !important;
   transition: all 0.2s ease;
+  padding-left: 12px !important;
 }
 
 .el-menu-item:hover {
@@ -949,6 +951,8 @@ export default {
 
 .contactlist-user-title {
   font-family: Arial, Helvetica, sans-serif;
+  font-weight: 600;
+  color: #1f2937;
 }
 
 h3 {
