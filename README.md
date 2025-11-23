@@ -164,19 +164,6 @@ wework-reborn/
 更多 API 详情请查看 `api/v1/` 目录下的控制器文件。
 
 
-## 📝 开发说明
-
-### 数据库迁移
-
-新增数据库表或字段时，请在 `migrations/` 目录下创建 SQL 迁移脚本。
-
-### 代码规范
-
-- Go 代码遵循 Go 官方代码规范
-- JavaScript/Vue 代码遵循 ESLint 配置
-- 提交前请运行 `go fmt` 和 `npm run lint`
-
-
 ## 📄 许可证
 
 本项目基于 kama-chat 开源项目开发，请遵循原项目的许可证要求。
