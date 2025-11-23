@@ -1,6 +1,6 @@
 # WeWork Reborn
 
-一个基于 [kama-chat](https://github.com/kama-chat) 开发的即时通讯系统，支持端到端加密（E2EE）的单聊功能。
+一个基于 [KamaChat](https://github.com/youngyangyang04/KamaChat) 开发的即时通讯系统，支持端到端加密（E2EE）的单聊功能。
 
 ## 📋 项目简介
 
