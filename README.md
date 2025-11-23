@@ -163,17 +163,6 @@ wework-reborn/
 
 更多 API 详情请查看 `api/v1/` 目录下的控制器文件。
 
-## 🧪 测试
-
-### 端到端加密测试
-
-参考文档：`docs/E2EE测试指南.md`
-
-基本测试流程：
-1. 注册两个用户（Alice 和 Bob）
-2. Alice 向 Bob 发送加密消息
-3. 验证 Bob 能正确解密消息
-4. 测试消息的加密状态和密钥轮换
 
 ## 📝 开发说明
 
@@ -187,23 +176,11 @@ wework-reborn/
 - JavaScript/Vue 代码遵循 ESLint 配置
 - 提交前请运行 `go fmt` 和 `npm run lint`
 
-## 🤝 贡献
-
-欢迎提交 Issue 和 Pull Request！
 
 ## 📄 许可证
 
 本项目基于 kama-chat 开源项目开发，请遵循原项目的许可证要求。
 
-## 🙏 致谢
-
-- [kama-chat](https://github.com/kama-chat) - 原始开源项目
-- [Signal Protocol](https://signal.org/docs/) - 加密协议参考
-- [TweetNaCl.js](https://github.com/dchest/tweetnacl-js) - 加密库
-
-## 📞 联系方式
-
-如有问题或建议，请提交 Issue。
 
 ---
 
