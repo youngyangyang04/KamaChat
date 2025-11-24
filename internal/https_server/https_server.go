@@ -85,6 +85,13 @@ func init() {
 		auth.POST("message/sendEncryptedMessage", v1.SendEncryptedMessage)
 		auth.POST("chatroom/getCurContactListInChatRoom", v1.GetCurContactListInChatRoom)
 
+		// 通知相关接口
+		auth.POST("notification/getNotificationList", v1.GetNotificationList)
+		auth.POST("notification/getUnreadCount", v1.GetUnreadCount)
+		auth.POST("notification/markAsRead", v1.MarkAsRead)
+		auth.POST("notification/deleteNotification", v1.DeleteNotification)
+		auth.POST("notification/clearAll", v1.ClearAllNotification)
+
 		// 加密相关接口
 		auth.GET("crypto/getPublicKeyBundle", v1.GetPublicKeyBundle)
 		auth.GET("crypto/getOneTimePreKeyCount", v1.GetOneTimePreKeyCount)

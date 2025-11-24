@@ -14,6 +14,7 @@ import (
 	"kama_chat_server/pkg/enum/contact/contact_type_enum"
 	"kama_chat_server/pkg/enum/contact_apply/contact_apply_status_enum"
 	"kama_chat_server/pkg/enum/group_info/group_status_enum"
+	notification_type_enum "kama_chat_server/pkg/enum/notification/notification_type_enum"
 	"kama_chat_server/pkg/enum/user_info/user_status_enum"
 	"kama_chat_server/pkg/util/random"
 	"kama_chat_server/pkg/zlog"
@@ -297,6 +298,34 @@ func (u *userContactService) ApplyContact(req request.ApplyContactRequest) (stri
 			zlog.Error(res.Error.Error())
 			return constants.SYSTEM_ERROR, -1
 		}
+
+		// 创建好友申请通知（向被申请用户）
+		// 获取申请人的信息
+		var applicantUser model.UserInfo
+		if res := dao.GormDB.Where("uuid = ?", req.OwnerId).First(&applicantUser); res.Error != nil {
+			zlog.Warn(fmt.Sprintf("获取申请人信息失败: %s, error=%s", req.OwnerId, res.Error.Error()))
+		} else {
+			// 创建通知
+			extraData := fmt.Sprintf(`{"apply_id": "%s", "message": "%s"}`, contactApply.Uuid, req.Message)
+			_, _, ret := NotificationService.CreateNotification(
+				req.ContactId,                      // 被申请用户ID
+				notification_type_enum.FriendApply, // 通知类型：好友申请
+				"好友申请",                             // 标题
+				fmt.Sprintf("%s 申请添加您为好友", applicantUser.Nickname), // 内容
+				contactApply.Uuid,      // 关联ID：申请ID
+				"contact_apply",        // 关联类型
+				req.OwnerId,            // 发送者ID：申请人
+				applicantUser.Nickname, // 发送者昵称
+				applicantUser.Avatar,   // 发送者头像
+				extraData,              // 额外数据
+			)
+			if ret != 0 {
+				zlog.Warn(fmt.Sprintf("创建好友申请通知失败: applicant=%s, receiver=%s", req.OwnerId, req.ContactId))
+			} else {
+				zlog.Info(fmt.Sprintf("创建好友申请通知成功: applicant=%s, receiver=%s", req.OwnerId, req.ContactId))
+			}
+		}
+
 		return "申请成功", 0
 	} else if req.ContactId[0] == 'G' {
 		var group model.GroupInfo
@@ -528,6 +557,34 @@ func (u *userContactService) PassContactApply(ownerId string, contactId string) 
 		if err := myredis.DelKeysWithPattern("contact_user_list_" + contactId); err != nil {
 			zlog.Error(err.Error())
 		}
+
+		// 创建好友申请已通过通知（向申请人）
+		// 获取处理者的信息（ownerId是处理申请的人）
+		var handlerUser model.UserInfo
+		if res := dao.GormDB.Where("uuid = ?", ownerId).First(&handlerUser); res.Error != nil {
+			zlog.Warn(fmt.Sprintf("获取处理者信息失败: %s, error=%s", ownerId, res.Error.Error()))
+		} else {
+			// 创建通知
+			extraData := fmt.Sprintf(`{"apply_id": "%s", "contact_id": "%s"}`, contactApply.Uuid, ownerId)
+			_, _, ret := NotificationService.CreateNotification(
+				contactId,                              // 申请人ID
+				notification_type_enum.ContactAccepted, // 通知类型：好友申请已通过
+				"好友申请已通过",                              // 标题
+				fmt.Sprintf("%s 已通过您的好友申请", handlerUser.Nickname), // 内容
+				contactApply.Uuid,    // 关联ID：申请ID
+				"contact_apply",      // 关联类型
+				ownerId,              // 发送者ID：处理者
+				handlerUser.Nickname, // 发送者昵称
+				handlerUser.Avatar,   // 发送者头像
+				extraData,            // 额外数据
+			)
+			if ret != 0 {
+				zlog.Warn(fmt.Sprintf("创建好友申请已通过通知失败: applicant=%s, handler=%s", contactId, ownerId))
+			} else {
+				zlog.Info(fmt.Sprintf("创建好友申请已通过通知成功: applicant=%s, handler=%s", contactId, ownerId))
+			}
+		}
+
 		return "已添加该联系人", 0
 	} else {
 		var group model.GroupInfo
@@ -589,6 +646,33 @@ func (u *userContactService) RefuseContactApply(ownerId string, contactId string
 		return constants.SYSTEM_ERROR, -1
 	}
 	if ownerId[0] == 'U' {
+		// 创建好友申请已拒绝通知（向申请人）
+		// 获取处理者的信息（ownerId是处理申请的人）
+		var handlerUser model.UserInfo
+		if res := dao.GormDB.Where("uuid = ?", ownerId).First(&handlerUser); res.Error != nil {
+			zlog.Warn(fmt.Sprintf("获取处理者信息失败: %s, error=%s", ownerId, res.Error.Error()))
+		} else {
+			// 创建通知
+			extraData := fmt.Sprintf(`{"apply_id": "%s", "contact_id": "%s"}`, contactApply.Uuid, ownerId)
+			_, _, ret := NotificationService.CreateNotification(
+				contactId,                              // 申请人ID
+				notification_type_enum.ContactRejected, // 通知类型：好友申请已拒绝
+				"好友申请已拒绝",                              // 标题
+				fmt.Sprintf("%s 已拒绝您的好友申请", handlerUser.Nickname), // 内容
+				contactApply.Uuid,    // 关联ID：申请ID
+				"contact_apply",      // 关联类型
+				ownerId,              // 发送者ID：处理者
+				handlerUser.Nickname, // 发送者昵称
+				handlerUser.Avatar,   // 发送者头像
+				extraData,            // 额外数据
+			)
+			if ret != 0 {
+				zlog.Warn(fmt.Sprintf("创建好友申请已拒绝通知失败: applicant=%s, handler=%s", contactId, ownerId))
+			} else {
+				zlog.Info(fmt.Sprintf("创建好友申请已拒绝通知成功: applicant=%s, handler=%s", contactId, ownerId))
+			}
+		}
+
 		return "已拒绝该联系人申请", 0
 	} else {
 		return "已拒绝该加群申请", 0

@@ -46,6 +46,7 @@ func init() {
 		&model.Message{},
 		&model.OneTimePreKey{},
 		&model.KeyReplenishmentLog{},
+		&model.Notification{},
 	)
 	if err != nil {
 		zlog.Fatal(err.Error())
