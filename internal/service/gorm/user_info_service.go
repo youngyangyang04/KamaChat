@@ -1,7 +1,6 @@
 package gorm
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"kama_chat_server/internal/dao"
@@ -19,7 +18,6 @@ import (
 	"regexp"
 	"time"
 
-	redis "github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
@@ -541,46 +539,24 @@ func (u *userInfoService) DeleteUsers(uuidList []string) (string, int) {
 
 // GetUserInfo 获取用户信息
 func (u *userInfoService) GetUserInfo(uuid string) (string, *respond.GetUserInfoRespond, int) {
-	// redis
 	zlog.Info(uuid)
-	rspString, err := myredis.GetKeyNilIsErr("user_info_" + uuid)
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			zlog.Info(err.Error())
-			var user model.UserInfo
-			if res := dao.GormDB.Where("uuid = ?", uuid).Find(&user); res.Error != nil {
-				zlog.Error(res.Error.Error())
-				return constants.SYSTEM_ERROR, nil, -1
-			}
-			rsp := respond.GetUserInfoRespond{
-				Uuid:      user.Uuid,
-				Telephone: user.Telephone,
-				Nickname:  user.Nickname,
-				Avatar:    user.Avatar,
-				Birthday:  user.Birthday,
-				Email:     user.Email,
-				Gender:    user.Gender,
-				Signature: user.Signature,
-				CreatedAt: user.CreatedAt.Format("2006-01-02 15:04:05"),
-				IsAdmin:   user.IsAdmin,
-				Status:    user.Status,
-			}
-			//rspString, err := json.Marshal(rsp)
-			//if err != nil {
-			//	zlog.Error(err.Error())
-			//}
-			//if err := myredis.SetKeyEx("user_info_"+uuid, string(rspString), constants.REDIS_TIMEOUT*time.Minute); err != nil {
-			//	zlog.Error(err.Error())
-			//}
-			return "获取用户信息成功", &rsp, 0
-		} else {
-			zlog.Error(err.Error())
-			return constants.SYSTEM_ERROR, nil, -1
-		}
+	var user model.UserInfo
+	if res := dao.GormDB.Where("uuid = ?", uuid).Find(&user); res.Error != nil {
+		zlog.Error(res.Error.Error())
+		return constants.SYSTEM_ERROR, nil, -1
 	}
-	var rsp respond.GetUserInfoRespond
-	if err := json.Unmarshal([]byte(rspString), &rsp); err != nil {
-		zlog.Error(err.Error())
+	rsp := respond.GetUserInfoRespond{
+		Uuid:      user.Uuid,
+		Telephone: user.Telephone,
+		Nickname:  user.Nickname,
+		Avatar:    user.Avatar,
+		Birthday:  user.Birthday,
+		Email:     user.Email,
+		Gender:    user.Gender,
+		Signature: user.Signature,
+		CreatedAt: user.CreatedAt.Format("2006-01-02 15:04:05"),
+		IsAdmin:   user.IsAdmin,
+		Status:    user.Status,
 	}
 	return "获取用户信息成功", &rsp, 0
 }
