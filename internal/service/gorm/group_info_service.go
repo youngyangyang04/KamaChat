@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-redis/redis/v8"
-	"gorm.io/gorm"
 	"kama_chat_server/internal/dao"
 	"kama_chat_server/internal/dto/request"
 	"kama_chat_server/internal/dto/respond"
@@ -19,6 +17,9 @@ import (
 	"kama_chat_server/pkg/zlog"
 	"log"
 	"time"
+
+	"github.com/go-redis/redis/v8"
+	"gorm.io/gorm"
 )
 
 type groupInfoService struct {
@@ -176,45 +177,25 @@ func (g *groupInfoService) LoadMyGroup(ownerId string) (string, []respond.LoadMy
 
 // GetGroupInfo 获取群聊详情
 func (g *groupInfoService) GetGroupInfo(groupId string) (string, *respond.GetGroupInfoRespond, int) {
-	rspString, err := myredis.GetKeyNilIsErr("group_info_" + groupId)
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			var group model.GroupInfo
-			if res := dao.GormDB.First(&group, "uuid = ?", groupId); res.Error != nil {
-				zlog.Error(res.Error.Error())
-				return constants.SYSTEM_ERROR, nil, -1
-			}
-			rsp := &respond.GetGroupInfoRespond{
-				Uuid:      group.Uuid,
-				Name:      group.Name,
-				Notice:    group.Notice,
-				Avatar:    group.Avatar,
-				MemberCnt: group.MemberCnt,
-				OwnerId:   group.OwnerId,
-				AddMode:   group.AddMode,
-				Status:    group.Status,
-			}
-			if group.DeletedAt.Valid {
-				rsp.IsDeleted = true
-			} else {
-				rsp.IsDeleted = false
-			}
-			//rspString, err := json.Marshal(rsp)
-			//if err != nil {
-			//	zlog.Error(err.Error())
-			//}
-			//if err := myredis.SetKeyEx("group_info_"+groupId, string(rspString), time.Minute*constants.REDIS_TIMEOUT); err != nil {
-			//	zlog.Error(err.Error())
-			//}
-			return "获取成功", rsp, 0
-		} else {
-			zlog.Error(err.Error())
-			return constants.SYSTEM_ERROR, nil, -1
-		}
+	var group model.GroupInfo
+	if res := dao.GormDB.First(&group, "uuid = ?", groupId); res.Error != nil {
+		zlog.Error(res.Error.Error())
+		return constants.SYSTEM_ERROR, nil, -1
 	}
-	var rsp *respond.GetGroupInfoRespond
-	if err := json.Unmarshal([]byte(rspString), &rsp); err != nil {
-		zlog.Error(err.Error())
+	rsp := &respond.GetGroupInfoRespond{
+		Uuid:      group.Uuid,
+		Name:      group.Name,
+		Notice:    group.Notice,
+		Avatar:    group.Avatar,
+		MemberCnt: group.MemberCnt,
+		OwnerId:   group.OwnerId,
+		AddMode:   group.AddMode,
+		Status:    group.Status,
+	}
+	if group.DeletedAt.Valid {
+		rsp.IsDeleted = true
+	} else {
+		rsp.IsDeleted = false
 	}
 	return "获取成功", rsp, 0
 }
@@ -470,25 +451,12 @@ func (g *groupInfoService) DeleteGroups(uuidList []string) (string, int) {
 
 // CheckGroupAddMode 检查群聊加群方式
 func (g *groupInfoService) CheckGroupAddMode(groupId string) (string, int8, int) {
-	rspString, err := myredis.GetKeyNilIsErr("group_info_" + groupId)
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			var group model.GroupInfo
-			if res := dao.GormDB.First(&group, "uuid = ?", groupId); res.Error != nil {
-				zlog.Error(res.Error.Error())
-				return constants.SYSTEM_ERROR, -1, -1
-			}
-			return "加群方式获取成功", group.AddMode, 0
-		} else {
-			zlog.Error(err.Error())
-			return constants.SYSTEM_ERROR, -1, -1
-		}
+	var group model.GroupInfo
+	if res := dao.GormDB.First(&group, "uuid = ?", groupId); res.Error != nil {
+		zlog.Error(res.Error.Error())
+		return constants.SYSTEM_ERROR, -1, -1
 	}
-	var rsp respond.GetGroupInfoRespond
-	if err := json.Unmarshal([]byte(rspString), &rsp); err != nil {
-		zlog.Error(err.Error())
-	}
-	return "加群方式获取成功", rsp.AddMode, 0
+	return "加群方式获取成功", group.AddMode, 0
 }
 
 // EnterGroupDirectly 直接进群
@@ -628,50 +596,30 @@ func (g *groupInfoService) UpdateGroupInfo(req request.UpdateGroupInfoRequest) (
 
 // GetGroupMemberList 获取群聊成员列表
 func (g *groupInfoService) GetGroupMemberList(groupId string) (string, []respond.GetGroupMemberListRespond, int) {
-	rspString, err := myredis.GetKeyNilIsErr("group_memberlist_" + groupId)
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			var group model.GroupInfo
-			if res := dao.GormDB.First(&group, "uuid = ?", groupId); res.Error != nil {
-				zlog.Error(res.Error.Error())
-				return constants.SYSTEM_ERROR, nil, -1
-			}
-			var members []string
-			if err := json.Unmarshal(group.Members, &members); err != nil {
-				zlog.Error(err.Error())
-				return constants.SYSTEM_ERROR, nil, -1
-			}
-			var rspList []respond.GetGroupMemberListRespond
-			for _, member := range members {
-				var user model.UserInfo
-				if res := dao.GormDB.First(&user, "uuid = ?", member); res.Error != nil {
-					zlog.Error(res.Error.Error())
-					return constants.SYSTEM_ERROR, nil, -1
-				}
-				rspList = append(rspList, respond.GetGroupMemberListRespond{
-					UserId:   user.Uuid,
-					Nickname: user.Nickname,
-					Avatar:   user.Avatar,
-				})
-			}
-			//rspString, err := json.Marshal(rspList)
-			//if err != nil {
-			//	zlog.Error(err.Error())
-			//}
-			//if err := myredis.SetKeyEx("group_memberlist_"+groupId, string(rspString), time.Minute*constants.REDIS_TIMEOUT); err != nil {
-			//	zlog.Error(err.Error())
-			//}
-			return "获取群聊成员列表成功", rspList, 0
-		} else {
-			zlog.Error(err.Error())
+	var group model.GroupInfo
+	if res := dao.GormDB.First(&group, "uuid = ?", groupId); res.Error != nil {
+		zlog.Error(res.Error.Error())
+		return constants.SYSTEM_ERROR, nil, -1
+	}
+	var members []string
+	if err := json.Unmarshal(group.Members, &members); err != nil {
+		zlog.Error(err.Error())
+		return constants.SYSTEM_ERROR, nil, -1
+	}
+	var rspList []respond.GetGroupMemberListRespond
+	for _, member := range members {
+		var user model.UserInfo
+		if res := dao.GormDB.First(&user, "uuid = ?", member); res.Error != nil {
+			zlog.Error(res.Error.Error())
 			return constants.SYSTEM_ERROR, nil, -1
 		}
+		rspList = append(rspList, respond.GetGroupMemberListRespond{
+			UserId:   user.Uuid,
+			Nickname: user.Nickname,
+			Avatar:   user.Avatar,
+		})
 	}
-	var rsp []respond.GetGroupMemberListRespond
-	if err := json.Unmarshal([]byte(rspString), &rsp); err != nil {
-		zlog.Error(err.Error())
-	}
-	return "获取群聊成员列表成功", rsp, 0
+	return "获取群聊成员列表成功", rspList, 0
 }
 
 // RemoveGroupMembers 移除群聊成员

@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-redis/redis/v8"
-	"gorm.io/gorm"
 	"kama_chat_server/internal/dao"
 	"kama_chat_server/internal/dto/request"
 	"kama_chat_server/internal/dto/respond"
@@ -18,6 +16,9 @@ import (
 	"kama_chat_server/pkg/util/random"
 	"kama_chat_server/pkg/zlog"
 	"time"
+
+	"github.com/go-redis/redis/v8"
+	"gorm.io/gorm"
 )
 
 type sessionService struct {
@@ -118,36 +119,18 @@ func (s *sessionService) CheckOpenSessionAllowed(sendId, receiveId string) (stri
 
 // OpenSession 打开会话
 func (s *sessionService) OpenSession(req request.OpenSessionRequest) (string, string, int) {
-	rspString, err := myredis.GetKeyWithPrefixNilIsErr("session_" + req.SendId + "_" + req.ReceiveId)
-	if err != nil {
-		if errors.Is(err, redis.Nil) {
-			var session model.Session
-			if res := dao.GormDB.Where("send_id = ? and receive_id = ?", req.SendId, req.ReceiveId).First(&session); res.Error != nil {
-				if errors.Is(res.Error, gorm.ErrRecordNotFound) {
-					zlog.Info("会话没有找到，将新建会话")
-					createReq := request.CreateSessionRequest{
-						SendId:    req.SendId,
-						ReceiveId: req.ReceiveId,
-					}
-					return s.CreateSession(createReq)
-				}
-			}
-			//rspString, err := json.Marshal(session)
-			//if err != nil {
-			//	zlog.Error(err.Error())
-			//}
-			//if err := myredis.SetKeyEx("session_"+req.SendId+"_"+req.ReceiveId+"_"+session.Uuid, string(rspString), time.Minute*constants.REDIS_TIMEOUT); err != nil {
-			//	zlog.Error(err.Error())
-			//}
-			return "会话创建成功", session.Uuid, 0
-		} else {
-			zlog.Error(err.Error())
-			return constants.SYSTEM_ERROR, "", -1
-		}
-	}
 	var session model.Session
-	if err := json.Unmarshal([]byte(rspString), &session); err != nil {
-		zlog.Error(err.Error())
+	if res := dao.GormDB.Where("send_id = ? and receive_id = ?", req.SendId, req.ReceiveId).First(&session); res.Error != nil {
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			zlog.Info("会话没有找到，将新建会话")
+			createReq := request.CreateSessionRequest{
+				SendId:    req.SendId,
+				ReceiveId: req.ReceiveId,
+			}
+			return s.CreateSession(createReq)
+		}
+		zlog.Error(res.Error.Error())
+		return constants.SYSTEM_ERROR, "", -1
 	}
 	return "会话创建成功", session.Uuid, 0
 }
