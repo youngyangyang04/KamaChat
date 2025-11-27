@@ -1857,6 +1857,12 @@ export default {
         console.log(rsp);
         if (rsp.data.code == 200) {
           ElMessage.success(rsp.data.message);
+          
+          // 注意：不在这里建立加密会话
+          // 正确的流程是：对方发送第一条 PreKeyMessage 时，接收方会自动建立会话
+          // 如果双方都主动建立会话，会导致密钥不匹配
+          console.log("✅ [ContactChat] 已同意好友申请，等待对方发送消息时自动建立加密会话");
+          
           data.addGroupList = data.addGroupList.filter(
             (c) => c.contact_id !== contactId
           );

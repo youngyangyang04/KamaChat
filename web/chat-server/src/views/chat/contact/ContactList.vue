@@ -735,6 +735,12 @@ export default {
         );
         if (rsp.data.code === 200) {
           ElMessage.success(rsp.data.message || "已同意好友申请");
+          
+          // 注意：不在这里建立加密会话
+          // 正确的流程是：对方发送第一条 PreKeyMessage 时，接收方会自动建立会话
+          // 如果双方都主动建立会话，会导致密钥不匹配
+          console.log("✅ [ContactList] 已同意好友申请，等待对方发送消息时自动建立加密会话");
+          
           if (notification.status === 0) {
             try {
               const markReq = {

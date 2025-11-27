@@ -92,6 +92,7 @@ import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useStore } from "vuex";
 import { initializeUserKeys, loginAndDeriveMasterKey } from "@/crypto";
+import { setCurrentUserId } from "@/crypto/cryptoStore";
 
 export default {
   name: "Register",
@@ -137,64 +138,79 @@ export default {
           return;
         }
 
-        // 显示加载提示
-        ElMessage.info("正在生成加密密钥，请稍候...");
+        // 第一步：调用普通注册接口获取用户 ID
+        const registerResponse = await axios.post("/register", data.registerData);
+        if (registerResponse.data.code !== 200) {
+          ElMessage.error(registerResponse.data.message);
+          console.log(registerResponse.data.message);
+          return;
+        }
 
-        // 生成加密密钥
+        // 获取用户信息
+        if (!registerResponse.data.data.avatar.startsWith("http")) {
+          registerResponse.data.data.avatar =
+            store.state.backendUrl + registerResponse.data.data.avatar;
+        }
+        store.commit("setUserInfo", registerResponse.data.data);
+        const userId = registerResponse.data.data.uuid;
+
+        // 第二步：立即设置当前用户 ID（确保 IndexedDB 使用正确的数据库）
+        setCurrentUserId(userId);
+        console.log(`🔐 [Register.vue] 已设置当前用户 ID: ${userId}`);
+
+        // 第三步：生成加密密钥（此时已设置用户 ID，密钥会保存到正确的用户专属数据库）
+        ElMessage.info("正在生成加密密钥，请稍候...");
         let cryptoKeys;
         try {
           cryptoKeys = await initializeUserKeys(data.registerData.password);
-          console.log("加密密钥生成成功");
+          console.log("✅ 加密密钥生成成功");
         } catch (error) {
-          console.error("生成加密密钥失败:", error);
+          console.error("❌ 生成加密密钥失败:", error);
           ElMessage.error("生成加密密钥失败: " + error.message);
           return;
         }
 
-        // 调用带加密的注册接口
-        const response = await axios.post("/registerWithCrypto", {
-          ...data.registerData,
-          ...cryptoKeys,
-        });
-        if (response.data.code == 200) {
-          ElMessage.success(response.data.message + " (端到端加密已启用)");
-          console.log(response.data.message);
-
-          // 重新派生主密钥并保存到内存
-          const masterKey = await loginAndDeriveMasterKey(data.registerData.password);
-          if (masterKey) {
-            store.commit("setMasterKey", masterKey);
-            console.log("主密钥已保存到内存");
+        // 第四步：上传公钥束到服务器
+        try {
+          const uploadResponse = await axios.post("/crypto/uploadPublicKeyBundle", {
+            user_id: userId,
+            ...cryptoKeys,
+          });
+          if (uploadResponse.data.code === 200) {
+            console.log("✅ 公钥束上传成功");
+            ElMessage.success("注册成功！(端到端加密已启用)");
+          } else {
+            console.warn("⚠️ 上传公钥束失败:", uploadResponse.data.message);
+            ElMessage.warning("公钥上传失败，但账号已创建成功");
           }
-
-          // 查看avatar前缀有没有http
-          if (!response.data.data.avatar.startsWith("http")) {
-            response.data.data.avatar =
-              store.state.backendUrl + response.data.data.avatar;
-          }
-          store.commit("setUserInfo", response.data.data);
-          // 准备创建websocket连接
-          const wsUrl =
-            store.state.wsUrl + "/wss?client_id=" + response.data.data.uuid + "&token=" + encodeURIComponent(response.data.data.token);
-          console.log(wsUrl);
-          store.state.socket = new WebSocket(wsUrl);
-          store.state.socket.onopen = () => {
-            console.log("WebSocket连接已打开");
-          };
-          store.state.socket.onmessage = (message) => {
-            console.log("收到消息：", message.data);
-          };
-          store.state.socket.onclose = () => {
-            console.log("WebSocket连接已关闭");
-          };
-          store.state.socket.onerror = (error) => {
-            console.log("WebSocket连接发生错误", error);
-          };
-          router.push("/chat/sessionlist");
-        } else {
-          ElMessage.error(response.data.message);
-          console.log(response.data.message);
+        } catch (error) {
+          console.error("❌ 上传公钥束出错:", error);
+          ElMessage.warning("公钥上传失败，但账号已创建成功");
         }
+
+        // 第五步：派生主密钥并保存到内存
+        const masterKey = await loginAndDeriveMasterKey(data.registerData.password);
+        if (masterKey) {
+          store.commit("setMasterKey", masterKey);
+          console.log("✅ 主密钥已保存到内存");
+        }
+
+        // 第六步：创建 WebSocket 连接
+        const wsUrl =
+          store.state.wsUrl + "/wss?client_id=" + userId + "&token=" + encodeURIComponent(registerResponse.data.data.token);
+        console.log(wsUrl);
+        store.state.socket = new WebSocket(wsUrl);
+        store.state.socket.onopen = () => {
+          console.log("🌐 [Register.vue] WebSocket连接已打开");
+        };
+        // 不设置 onmessage，让 App.vue 统一管理
+        store.state.socket.onclose = () => {
+          console.log("🌐 [Register.vue] WebSocket连接已关闭");
+        };
+        store.state.socket.onerror = (error) => {
+          console.log("🌐 [Register.vue] WebSocket连接发生错误", error);
+        };
+        router.push("/chat/sessionlist");
       } catch (error) {
         ElMessage.error(error);
         console.log(error);

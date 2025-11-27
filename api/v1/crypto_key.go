@@ -126,6 +126,60 @@ func ReplenishOneTimePreKeys(c *gin.Context) {
 	})
 }
 
+// UploadPublicKeyBundle 上传公钥束
+// @Summary 上传公钥束
+// @Description 用户注册后上传公钥束到服务器
+// @Tags Crypto
+// @Accept json
+// @Produce json
+// @Param data body request.UploadPublicKeyBundleRequest true "公钥束数据"
+// @Success 200 {object} map[string]interface{}
+// @Router /crypto/uploadPublicKeyBundle [post]
+func UploadPublicKeyBundle(c *gin.Context) {
+	var req request.UploadPublicKeyBundleRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		zlog.Error("参数绑定失败: " + err.Error())
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "参数错误: " + err.Error(),
+		})
+		return
+	}
+
+	// 验证用户 ID
+	if req.UserId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"code":    http.StatusBadRequest,
+			"message": "缺少 user_id 参数",
+		})
+		return
+	}
+
+	// 构造 RegisterCryptoRequest（复用已有的保存逻辑）
+	cryptoReq := &request.RegisterCryptoRequest{
+		IdentityKeyPublic:           req.IdentityKeyPublic,
+		IdentityKeyPublicCurve25519: req.IdentityKeyPublicCurve25519,
+		SignedPreKey:                req.SignedPreKey,
+		OneTimePreKeys:              req.OneTimePreKeys,
+	}
+
+	// 保存公钥束
+	if err := gorm.CryptoKeyService.SaveUserPublicKeys(req.UserId, cryptoReq); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"code":    http.StatusInternalServerError,
+			"message": "保存公钥束失败: " + err.Error(),
+		})
+		return
+	}
+
+	zlog.Info("用户 " + req.UserId + " 公钥束上传成功")
+	c.JSON(http.StatusOK, gin.H{
+		"code":    http.StatusOK,
+		"message": "公钥束上传成功",
+	})
+}
+
 // RotateSignedPreKey 轮换签名预密钥
 // @Summary 轮换签名预密钥
 // @Description 更新用户的签名预密钥

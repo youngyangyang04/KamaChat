@@ -95,6 +95,7 @@ func init() {
 		// 加密相关接口
 		auth.GET("crypto/getPublicKeyBundle", v1.GetPublicKeyBundle)
 		auth.GET("crypto/getOneTimePreKeyCount", v1.GetOneTimePreKeyCount)
+		auth.POST("crypto/uploadPublicKeyBundle", v1.UploadPublicKeyBundle)
 		auth.POST("crypto/replenishOneTimePreKeys", v1.ReplenishOneTimePreKeys)
 		auth.POST("crypto/rotateSignedPreKey", v1.RotateSignedPreKey)
 

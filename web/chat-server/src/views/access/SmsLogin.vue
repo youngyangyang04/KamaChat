@@ -68,6 +68,7 @@ import axios from "@/utils/axios";
 import { useRouter } from "vue-router";
 import { ElMessage } from "element-plus";
 import { useStore } from "vuex";
+import { setCurrentUserId } from "@/crypto/cryptoStore";
 export default {
   name: "smsLogin",
   setup() {
@@ -106,6 +107,11 @@ export default {
                 store.state.backendUrl + response.data.data.avatar;
             }
             store.commit("setUserInfo", response.data.data);
+            
+            // 设置当前用户 ID，确保 IndexedDB 数据隔离
+            setCurrentUserId(response.data.data.uuid);
+            console.log(`🔐 [SmsLogin.vue] 已设置当前用户 ID: ${response.data.data.uuid}`);
+            
             // 准备创建websocket连接
             const wsUrl =
               store.state.wsUrl + "/wss?client_id=" + response.data.data.uuid + "&token=" + encodeURIComponent(response.data.data.token);

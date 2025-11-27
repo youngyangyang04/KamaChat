@@ -9,6 +9,7 @@ import { useRouter } from "vue-router";
 import axios from "@/utils/axios";
 import { ElMessage } from "element-plus";
 import eventBus from "@/utils/eventBus";
+import { setCurrentUserId } from "@/crypto/cryptoStore";
 
 export default {
   name: "App",
@@ -144,6 +145,10 @@ export default {
     
     onMounted(() => {
       if (store.state.userInfo.uuid) {
+        // 设置当前用户 ID，确保 IndexedDB 数据隔离
+        setCurrentUserId(store.state.userInfo.uuid);
+        console.log(`🔐 [App.vue] 已设置当前用户 ID: ${store.state.userInfo.uuid}`);
+        
         getUserInfo();
         
         // 初始化时获取未读通知数量
@@ -215,7 +220,13 @@ export default {
       () => store.state.userInfo.uuid,
       (newUuid, oldUuid) => {
         if (newUuid && newUuid !== oldUuid) {
-          console.log("🔔 [App.vue] 检测到用户登录，获取未读通知数量");
+          console.log("🔔 [App.vue] 检测到用户登录");
+          
+          // 设置当前用户 ID，确保 IndexedDB 数据隔离
+          setCurrentUserId(newUuid);
+          console.log(`🔐 [App.vue] 已设置当前用户 ID: ${newUuid}`);
+          
+          // 获取未读通知数量
           getUnreadNotificationCount();
         }
       }

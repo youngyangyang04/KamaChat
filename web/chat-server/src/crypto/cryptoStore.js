@@ -3,7 +3,7 @@
  * 存储用户密钥、会话状态、消息密钥缓存
  */
 
-const DB_NAME = 'wework_crypto';
+const DB_NAME_PREFIX = 'wework_crypto';
 const DB_VERSION = 3; // 增加版本号以添加新的 Object Store
 
 // Object Store 名称
@@ -18,6 +18,31 @@ const STORES = {
 };
 
 let dbInstance = null;
+let currentUserId = null;
+
+/**
+ * 设置当前用户 ID（用于数据库隔离）
+ * @param {string} userId 
+ */
+export function setCurrentUserId(userId) {
+  if (currentUserId !== userId) {
+    console.log(`🔄 [CryptoStore] 切换用户: ${currentUserId} → ${userId}`);
+    currentUserId = userId;
+    dbInstance = null; // 切换用户时清空数据库实例，强制重新打开
+  }
+}
+
+/**
+ * 获取当前用户的数据库名称
+ * @returns {string}
+ */
+function getDBName() {
+  if (!currentUserId) {
+    console.warn('⚠️ [CryptoStore] 未设置用户 ID，使用默认数据库');
+    return DB_NAME_PREFIX;
+  }
+  return `${DB_NAME_PREFIX}_${currentUserId}`;
+}
 
 /**
  * 初始化 IndexedDB
@@ -28,8 +53,11 @@ export async function initCryptoStore() {
     return dbInstance;
   }
 
+  const dbName = getDBName();
+  console.log(`🗄️ [CryptoStore] 打开数据库: ${dbName}`);
+
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    const request = indexedDB.open(dbName, DB_VERSION);
 
     request.onerror = () => {
       reject(new Error('Failed to open IndexedDB'));
