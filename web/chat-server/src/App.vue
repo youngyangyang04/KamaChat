@@ -84,6 +84,12 @@ export default {
     // 全局 WebSocket 消息处理器 - 作为唯一的消息入口
     const handleWebSocketMessage = async (jsonMessage) => {
       try {
+        // 跳过非 JSON 消息（如服务器欢迎消息）
+        if (typeof jsonMessage.data !== 'string' || !jsonMessage.data.trim().startsWith('{')) {
+          console.log("🌐 [App.vue] 收到非 JSON 消息（已忽略）:", jsonMessage.data);
+          return;
+        }
+        
         const message = JSON.parse(jsonMessage.data);
         console.log("🌐 [App.vue] 全局收到 WebSocket 消息：", message);
         

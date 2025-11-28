@@ -92,9 +92,10 @@ export async function initializeUserKeys(password) {
   }
 
   // 8. 存储 Salt（用于登录时重新派生主密钥）
+  // 重要：将 Uint8Array 转换为 base64 字符串，避免 IndexedDB 序列化问题
   await put(STORES.MASTER_KEY_SALT, {
     id: 1,
-    salt: salt,
+    salt: arrayBufferToBase64(salt),
     iterations: 100000,
     created_at: Date.now(),
   });
@@ -141,10 +142,13 @@ export async function loginAndDeriveMasterKey(password) {
     throw new Error('未找到 Salt，请先注册');
   }
 
-  // 2. 派生主密钥
-  const masterKey = await deriveKey(password, saltData.salt, saltData.iterations);
+  // 2. 将 base64 字符串转换回 Uint8Array
+  const salt = base64ToArrayBuffer(saltData.salt);
 
-  // 3. 验证主密钥
+  // 3. 派生主密钥
+  const masterKey = await deriveKey(password, salt, saltData.iterations);
+
+  // 4. 验证主密钥
   const testData = await get(STORES.MASTER_KEY_SALT, 2);
   if (testData) {
     const isValid = await verifyMasterKey(masterKey, {
@@ -169,17 +173,38 @@ export async function loginAndDeriveMasterKey(password) {
  * @returns {Promise<Uint8Array>}
  */
 export async function getIdentityPrivateKey(masterKey) {
+  console.log('🔑 [keyManager] 开始获取身份私钥，masterKey 长度:', masterKey?.length);
+  
   const keyData = await get(STORES.USER_KEYS, 'identity');
   if (!keyData) {
+    console.error('❌ [keyManager] 未找到身份密钥数据');
     throw new Error('未找到身份密钥');
   }
+  
+  console.log('🔑 [keyManager] 找到身份密钥数据，开始解密...');
+  console.log('🔑 [keyManager] 密钥数据预览:', {
+    has_private_key: !!keyData.private_key,
+    private_key_length: keyData.private_key?.length,
+    has_iv: !!keyData.iv,
+    iv_length: keyData.iv?.length,
+    has_auth_tag: !!keyData.auth_tag,
+    auth_tag_length: keyData.auth_tag?.length,
+  });
 
-  return await decryptWithMasterKey(
-    masterKey,
-    keyData.private_key,
-    keyData.iv,
-    keyData.auth_tag
-  );
+  try {
+    const privateKey = await decryptWithMasterKey(
+      masterKey,
+      keyData.private_key,
+      keyData.iv,
+      keyData.auth_tag
+    );
+    console.log('✅ [keyManager] 身份私钥解密成功');
+    return privateKey;
+  } catch (error) {
+    console.error('❌ [keyManager] 身份私钥解密失败:', error);
+    console.error('❌ [keyManager] 这通常意味着主密钥不正确或密钥数据已损坏');
+    throw error;
+  }
 }
 
 /**

@@ -373,6 +373,14 @@ export async function decryptMessageList(messages) {
         ? message.receive_id
         : message.send_id;
 
+    // 🔥 关键修复：如果 PreKeyMessage 是自己发送的，跳过会话建立
+    // 因为发送方已经在发送时建立了会话，不应该再次接受自己的 PreKeyMessage
+    const isSentByMe = message.send_id === store.state.userInfo.uuid;
+    if (isSentByMe) {
+      console.log(`🔒 [messageDecryptor] 跳过自己发送的 PreKeyMessage (contactId: ${contactId})`);
+      continue;
+    }
+
     // 如果已经为这个联系人建立过会话，跳过
     if (contactSessions.has(contactId)) {
       continue;

@@ -1529,6 +1529,11 @@ export default {
       const plaintext = data.chatMessage;
 
       console.log("🔒 准备发送加密消息...");
+      console.log("🔒 [ContactChat] 当前主密钥状态:", {
+        has_master_key: !!store.state.masterKey,
+        master_key_length: store.state.masterKey?.length,
+        master_key_type: typeof store.state.masterKey,
+      });
 
       // 1. 检查会话是否存在
       const sessionExists = await hasSession(contactId);

@@ -87,6 +87,17 @@ export default {
             return;
           }
           try {
+            if (!response.data.data.avatar.startsWith("http")) {
+              response.data.data.avatar =
+                store.state.backendUrl + response.data.data.avatar;
+            }
+            store.commit("setUserInfo", response.data.data);
+            
+            // 🔥 关键：必须先设置当前用户 ID，确保 IndexedDB 数据隔离
+            // 这样 loginAndDeriveMasterKey 才能读取到正确的 salt
+            setCurrentUserId(response.data.data.uuid);
+            console.log(`🔐 [Login.vue] 已设置当前用户 ID: ${response.data.data.uuid}`);
+            
             // 尝试重新派生主密钥（如果用户启用了加密）
             try {
               const masterKey = await loginAndDeriveMasterKey(data.loginData.password);
@@ -111,16 +122,6 @@ export default {
               console.log("未找到加密密钥，使用普通模式:", error.message);
               ElMessage.success(response.data.message);
             }
-
-            if (!response.data.data.avatar.startsWith("http")) {
-              response.data.data.avatar =
-                store.state.backendUrl + response.data.data.avatar;
-            }
-            store.commit("setUserInfo", response.data.data);
-            
-            // 设置当前用户 ID，确保 IndexedDB 数据隔离
-            setCurrentUserId(response.data.data.uuid);
-            console.log(`🔐 [Login.vue] 已设置当前用户 ID: ${response.data.data.uuid}`);
             
             // 准备创建websocket连接
             const wsUrl =

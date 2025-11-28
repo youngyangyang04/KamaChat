@@ -254,11 +254,25 @@ export async function acceptSession(masterKey, contactId, aliceInitData) {
  * @returns {Promise<Object>} 加密消息数据
  */
 export async function encryptAndSendMessage(contactId, plaintext) {
+  console.log(`🔐 [sessionManager] 开始加密消息，contactId: ${contactId}`);
+  
   // 1. 读取会话状态
   const session = await get(STORES.SESSIONS, contactId);
   if (!session) {
+    console.error(`❌ [sessionManager] 会话不存在: ${contactId}`);
     throw new Error('会话不存在，请先建立会话');
   }
+  
+  console.log(`🔐 [sessionManager] 读取到会话状态:`, {
+    contactId: contactId,
+    has_root_key: !!session.root_key,
+    has_sending_chain_key: !!session.sending_chain_key,
+    has_receiving_chain_key: !!session.receiving_chain_key,
+    send_counter: session.send_counter,
+    receive_counter: session.receive_counter,
+    has_sending_ratchet_key: !!session.sending_ratchet_key_private,
+    has_receiving_ratchet_key: !!session.receiving_ratchet_key_public,
+  });
 
   // 确保 Uint8Array 字段是正确的类型（IndexedDB 可能将其序列化为普通对象）
   if (session.root_key && !(session.root_key instanceof Uint8Array)) {
