@@ -41,3 +41,5 @@ internal/service/kafka/start.bat
 
 logs/
 logs/*
+
+docs/*
