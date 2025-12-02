@@ -88,7 +88,52 @@ wework-reborn/
 
 ## 🚀 快速开始
 
-### 环境要求
+### 方式一：Docker 一键部署（推荐）
+
+#### 环境要求
+- Docker 20.10+
+- Docker Compose v2.0+
+
+#### 部署步骤
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/AppleGrey/wework-reborn.git
+cd wework-reborn
+
+# 2. 一键启动所有服务
+docker-compose up -d
+
+# 3. 查看服务状态
+docker-compose ps
+
+# 4. 查看日志
+docker-compose logs -f
+```
+
+#### 服务端口
+| 服务 | 端口 | 说明 |
+|------|------|------|
+| 前端 | 80 | Web 界面 |
+| 后端 | 8888 | API 服务 |
+| PostgreSQL | 5432 | 数据库 |
+| Redis | 6379 | 缓存 |
+| Kafka | 9092 | 消息队列 |
+
+#### 访问应用
+启动完成后，访问 http://localhost 即可使用。
+
+#### 停止服务
+```bash
+docker-compose down
+
+# 如需清除数据卷
+docker-compose down -v
+```
+
+### 方式二：手动部署
+
+#### 环境要求
 
 - Go 1.24+
 - Node.js 16+

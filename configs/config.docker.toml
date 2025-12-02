@@ -1,0 +1,47 @@
+[mainConfig]
+appName = "wework"
+host = "0.0.0.0"
+port = 8888
+enableHTTPS = false
+certFile = "pkg/ssl/127.0.0.1+2.pem"
+keyFile = "pkg/ssl/127.0.0.1+2-key.pem"
+
+[jwtConfig]
+secretKey = "this-is-a-token-secret-key-of-wework"
+expireHours = 24
+refreshHours = 168
+
+[postgresqlConfig]
+host = "postgres"
+port = 5432
+user = "postgres"
+password = "wework123"
+databaseName = "wework"
+
+[redisConfig]
+host = "redis"
+port = 6379
+password = ""
+db = 0
+
+[authCodeConfig]
+accessKeyID = "your accessKeyID in alibaba cloud"
+accessKeySecret = "your accessKeySecret in alibaba cloud"
+signName = "阿里云短信测试"
+templateCode = "SMS_154950909"
+
+[logConfig]
+logPath = "logs/app.log"
+
+[kafkaConfig]
+messageMode = "channel"
+hostPort = "kafka:9092"
+loginTopic = "login"
+chatTopic = "chat_message"
+logoutTopic = "logout"
+partition = 0
+timeout = 1
+
+[staticSrcConfig]
+staticAvatarPath = "./static/avatars"
+staticFilePath = "./static/files"

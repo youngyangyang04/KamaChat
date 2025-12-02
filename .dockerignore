@@ -1,0 +1,42 @@
+# 依赖目录
+node_modules/
+web/chat-server/node_modules/
+
+# 构建产物
+dist/
+web/chat-server/dist/
+
+# 日志文件
+logs/
+*.log
+
+# 本地配置
+configs/config.toml
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 测试
+test/
+*_test.go
+
+# 文档
+docs/
+*.md
+!README.md
+
+# 其他
+.DS_Store
+Thumbs.db
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
