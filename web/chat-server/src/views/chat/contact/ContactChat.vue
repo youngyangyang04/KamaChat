@@ -792,144 +792,11 @@
             </el-scrollbar>
             <div class="tool-bar">
               <div class="tool-bar-left">
-                <el-tooltip
-                  effect="customized"
-                  content="表情包"
-                  placement="top"
-                  hide-after="0"
-                  enterable="false"
-                >
-                  <button
-                    class="image-button"
-                    @click="
-                      downloadFile(backendUrl + '/static/avatars', '头像.jpg')
-                    "
-                  >
-                    <svg
-                      t="1733502796507"
-                      class="sticker-icon"
-                      viewBox="0 0 1024 1024"
-                      version="1.1"
-                      xmlns="http://www.w3.org/2000/svg"
-                      p-id="1555"
-                      width="128"
-                      height="128"
-                    >
-                      <path
-                        d="M504.32 31.872a472.256 472.256 0 1 1 0 944.512 472.256 472.256 0 0 1 0-944.512z m0 63.36a408.96 408.96 0 1 0 0 817.856 408.96 408.96 0 0 0 0-817.92z m228.864 487.808v0.192a217.856 217.856 0 1 1-435.712 0V583.04h435.712zM370.496 321.536a73.024 73.024 0 1 1 0 146.048 73.024 73.024 0 0 1 0-146.048z m289.664 0a73.024 73.024 0 1 1 0 146.048 73.024 73.024 0 0 1 0-146.048z"
-                        fill="#2c2c2c"
-                        p-id="1556"
-                      ></path>
-                    </svg>
-                  </button>
-                </el-tooltip>
-
-                <el-tooltip
-                  effect="customized"
-                  content="文件上传"
-                  placement="top"
-                  hide-after="0"
-                  enterable="false"
-                >
-                  <button class="image-button">
-                    <el-upload
-                      v-model:file-list="fileList"
-                      ref="uploadRef"
-                      :auto-upload="true"
-                      :show-file-list="false"
-                      :action="uploadPath"
-                      :on-success="handleUploadSuccess"
-                      :before-upload="beforeFileUpload"
-                      style="
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                      "
-                    >
-                      <svg
-                        t="1733503065264"
-                        class="upload-icon"
-                        viewBox="0 0 1024 1024"
-                        version="1.1"
-                        xmlns="http://www.w3.org/2000/svg"
-                        p-id="2430"
-                        width="128"
-                        height="128"
-                      >
-                        <path
-                          d="M543.7 157v534c0 16.6-13.4 30-30 30s-30-13.4-30-30V157c0-16.6 13.4-30 30-30 16.5 0 30 13.4 30 30z"
-                          fill=""
-                          p-id="2431"
-                        ></path>
-                        <path
-                          d="M323.1 331c11.8 11.8 30.7 11.8 42.5 0l119.9-119.9c15.6-15.6 40.9-15.6 56.6 0L662 331c11.7 11.7 30.7 11.7 42.4 0s11.7-30.7 0-42.4L541.7 126.1c-15.6-15.6-41-15.6-56.6 0L323 288.6c-11.6 11.8-11.6 30.7 0.1 42.4zM853.7 913h-680c-33.1 0-60-26.9-60-60V583.7c0-16.4 12.8-30.2 29.2-30.7 16.9-0.4 30.8 13.2 30.8 30v240c0 16.6 13.4 30 30 30h620c16.6 0 30-13.4 30-30V583.7c0-16.4 12.8-30.2 29.2-30.7 16.9-0.4 30.8 13.2 30.8 30v270c0 33.1-26.9 60-60 60z"
-                          fill=""
-                          p-id="2432"
-                        ></path>
-                      </svg>
-                    </el-upload>
-                  </button>
-                </el-tooltip>
-
-                <el-tooltip
-                  effect="customized"
-                  content="聊天记录"
-                  placement="top"
-                  hide-after="0"
-                  enterable="false"
-                >
-                  <button class="image-button">
-                    <svg
-                      t="1733504061769"
-                      class="record-icon"
-                      viewBox="0 0 1024 1024"
-                      version="1.1"
-                      xmlns="http://www.w3.org/2000/svg"
-                      p-id="5492"
-                      width="128"
-                      height="128"
-                    >
-                      <path
-                        d="M695.04 194.32H98.08c-18.32 0-33.16-14.85-33.16-33.16 0-18.32 14.85-33.16 33.16-33.16h596.96c18.32 0 33.16 14.85 33.16 33.16 0 18.31-14.84 33.16-33.16 33.16zM298.97 393.3H96.19c-17.27 0-31.27-14-31.27-31.27v-3.79c0-17.27 14-31.27 31.27-31.27h202.78c17.27 0 31.27 14 31.27 31.27v3.79c-0.01 17.28-14.01 31.27-31.27 31.27zM230.74 592.29H98.08c-18.32 0-33.16-14.85-33.16-33.16 0-18.32 14.85-33.16 33.16-33.16h132.66c18.32 0 33.16 14.85 33.16 33.16 0.01 18.31-14.84 33.16-33.16 33.16zM230.74 791.28H98.08c-18.32 0-33.16-14.85-33.16-33.16 0-18.32 14.85-33.16 33.16-33.16h132.66c18.32 0 33.16 14.85 33.16 33.16 0.01 18.31-14.84 33.16-33.16 33.16zM728.2 691.78H595.55c-18.32 0-33.16-14.85-33.16-33.16 0-18.32 14.85-33.16 33.16-33.16H728.2c18.32 0 33.16 14.85 33.16 33.16 0.01 18.31-14.84 33.16-33.16 33.16z"
-                        p-id="5493"
-                      ></path>
-                      <path
-                        d="M562.38 658.62V525.96c0-18.32 14.85-33.16 33.16-33.16 18.32 0 33.16 14.85 33.16 33.16v132.66c0 18.32-14.85 33.16-33.16 33.16-18.31 0-33.16-14.85-33.16-33.16z"
-                        p-id="5494"
-                      ></path>
-                      <path
-                        d="M960.35 625.45c0 183.16-148.48 331.64-331.64 331.64S297.07 808.62 297.07 625.45s148.48-331.64 331.64-331.64 331.64 148.48 331.64 331.64zM628.71 360.14c-146.53 0-265.31 118.79-265.31 265.31s118.79 265.31 265.31 265.31 265.31-118.79 265.31-265.31-118.78-265.31-265.31-265.31z"
-                        p-id="5495"
-                      ></path>
-                    </svg>
-                  </button>
-                </el-tooltip>
-                <el-tooltip
-                  effect="customized"
-                  content="全文复制"
-                  placement="top"
-                  hide-after="0"
-                  enterable="false"
-                >
-                  <button class="image-button">
-                    <svg
-                      t="1733503137487"
-                      class="copy-icon"
-                      viewBox="0 0 1024 1024"
-                      version="1.1"
-                      xmlns="http://www.w3.org/2000/svg"
-                      p-id="3442"
-                      width="128"
-                      height="128"
-                    >
-                      <path
-                        d="M394.666667 106.666667h448a74.666667 74.666667 0 0 1 74.666666 74.666666v448a74.666667 74.666667 0 0 1-74.666666 74.666667H394.666667a74.666667 74.666667 0 0 1-74.666667-74.666667V181.333333a74.666667 74.666667 0 0 1 74.666667-74.666666z m0 64a10.666667 10.666667 0 0 0-10.666667 10.666666v448a10.666667 10.666667 0 0 0 10.666667 10.666667h448a10.666667 10.666667 0 0 0 10.666666-10.666667V181.333333a10.666667 10.666667 0 0 0-10.666666-10.666666H394.666667z m245.333333 597.333333a32 32 0 0 1 64 0v74.666667a74.666667 74.666667 0 0 1-74.666667 74.666666H181.333333a74.666667 74.666667 0 0 1-74.666666-74.666666V394.666667a74.666667 74.666667 0 0 1 74.666666-74.666667h74.666667a32 32 0 0 1 0 64h-74.666667a10.666667 10.666667 0 0 0-10.666666 10.666667v448a10.666667 10.666667 0 0 0 10.666666 10.666666h448a10.666667 10.666667 0 0 0 10.666667-10.666666v-74.666667z"
-                        fill="#000000"
-                        p-id="3443"
-                      ></path>
-                    </svg>
-                  </button>
-                </el-tooltip>
+                <FileUpload 
+                  v-if="contactInfo.contact_id && contactInfo.contact_id.startsWith('U')"
+                  @upload-complete="handleFileUploadComplete"
+                  @upload-error="handleFileUploadError"
+                />
               </div>
               <div class="tool-bar-right">
                 <el-tooltip
@@ -1003,13 +870,6 @@
             </div>
           </el-main>
           <el-footer>
-            <div class="chat-footer-toolbar">
-              <FileUpload 
-                v-if="contactInfo.contact_id && contactInfo.contact_id.startsWith('U')"
-                @upload-complete="handleFileUploadComplete"
-                @upload-error="handleFileUploadError"
-              />
-            </div>
             <div class="chat-input">
               <el-input
                 v-model="chatMessage"
