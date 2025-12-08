@@ -63,3 +63,30 @@ export {
   updateRatchetKeyOnly,
 } from './sessionManager';
 
+// 文件加密
+export {
+  generateFileKey,
+  encryptFile,
+  decryptFile,
+  hashFile,
+  bytesToBase64,
+  base64ToBytes,
+  generateThumbnail,
+  encryptThumbnail,
+  decryptThumbnail,
+  readFileAsArrayBuffer,
+  formatFileSize,
+  isImageFile,
+  getFileExtension,
+} from './fileEncryption';
+
+// OSS 上传服务
+export {
+  getUploadCredential,
+  getDownloadURL,
+  uploadEncryptedFile,
+  uploadEncryptedImage,
+  downloadAndDecryptFile,
+  downloadAndDecryptFileAsURL,
+  downloadAndSaveFile,
+} from './ossUpload';

@@ -8,4 +8,8 @@ const (
 	File
 	// 通话
 	AudioOrVideo
+	// 加密图片
+	EncryptedImage
+	// 加密文件
+	EncryptedFile
 )

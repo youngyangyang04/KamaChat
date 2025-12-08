@@ -79,12 +79,19 @@ func SendEncryptedMessage(c *gin.Context) {
 	zlog.Info(fmt.Sprintf("保存加密消息: ciphertext长度=%d, iv长度=%d, auth_tag长度=%d",
 		len(req.Ciphertext), len(req.IV), len(req.AuthTag)))
 
+	// 确定消息类型：默认为文本(0)，如果指定了 FileMessageType 则使用指定的值
+	msgType := int8(0)
+	if req.FileMessageType != nil {
+		msgType = int8(*req.FileMessageType)
+		zlog.Info(fmt.Sprintf("加密文件消息类型: %d", msgType))
+	}
+
 	message := model.Message{
 		Uuid:      "M" + generateRandomString(11),
 		SessionId: req.SessionId,
 		SendId:    uuid.(string),
 		ReceiveId: req.ReceiverId,
-		Type:      0,              // 文本消息
+		Type:      msgType,        // 消息类型: 0=文本, 4=加密图片, 5=加密文件
 		Content:   req.Ciphertext, // 存储密文
 		Status:    0,
 		CreatedAt: time.Now(),
@@ -151,18 +158,18 @@ func pushMessageViaWebSocket(message *model.Message) {
 		CreatedAt:  message.CreatedAt.Format("2006-01-02 15:04:05"),
 
 		// 加密相关字段
-		IsEncrypted:                message.IsEncrypted,
-		EncryptionVersion:          message.EncryptionVersion,
-		MessageType:                message.MessageType,
-		SenderIdentityKey:          message.SenderIdentityKey,
+		IsEncrypted:                 message.IsEncrypted,
+		EncryptionVersion:           message.EncryptionVersion,
+		MessageType:                 message.MessageType,
+		SenderIdentityKey:           message.SenderIdentityKey,
 		SenderIdentityKeyCurve25519: message.SenderIdentityKeyCurve25519,
-		SenderEphemeralKey:         message.SenderEphemeralKey,
-		UsedOneTimePreKeyId:        message.UsedOneTimePreKeyId,
-		RatchetKey:                 message.RatchetKey,
-		Counter:                    message.Counter,
-		PrevCounter:                message.PrevCounter,
-		IV:                         message.IV,
-		AuthTag:                    message.AuthTag,
+		SenderEphemeralKey:          message.SenderEphemeralKey,
+		UsedOneTimePreKeyId:         message.UsedOneTimePreKeyId,
+		RatchetKey:                  message.RatchetKey,
+		Counter:                     message.Counter,
+		PrevCounter:                 message.PrevCounter,
+		IV:                          message.IV,
+		AuthTag:                     message.AuthTag,
 	}
 
 	jsonMessage, err := json.Marshal(messageRsp)

@@ -584,6 +584,58 @@
                     </div>
                   </div>
 
+                  <!-- 左侧加密图片消息 (type == 4) -->
+                  <div
+                    v-if="
+                      messageItem.send_id != userInfo.uuid &&
+                      messageItem.type == 4
+                    "
+                    class="left-message"
+                  >
+                    <div class="left-message-left">
+                      <el-image
+                        :src="messageItem.send_avatar"
+                        style="width: 40px; height: 40px; margin-left: 10px; margin-right: 10px; margin-top: 10px;"
+                      />
+                    </div>
+                    <div class="left-message-right">
+                      <div class="left-message-right-top">
+                        <div class="left-message-contactname">{{ messageItem.send_name }}</div>
+                        <div class="left-message-time">{{ messageItem.created_at }}</div>
+                      </div>
+                      <FileMessage 
+                        :file-info="parseFileInfo(messageItem)" 
+                        :is-encrypted="true" 
+                      />
+                    </div>
+                  </div>
+
+                  <!-- 左侧加密文件消息 (type == 5) -->
+                  <div
+                    v-if="
+                      messageItem.send_id != userInfo.uuid &&
+                      messageItem.type == 5
+                    "
+                    class="left-message"
+                  >
+                    <div class="left-message-left">
+                      <el-image
+                        :src="messageItem.send_avatar"
+                        style="width: 40px; height: 40px; margin-left: 10px; margin-right: 10px; margin-top: 10px;"
+                      />
+                    </div>
+                    <div class="left-message-right">
+                      <div class="left-message-right-top">
+                        <div class="left-message-contactname">{{ messageItem.send_name }}</div>
+                        <div class="left-message-time">{{ messageItem.created_at }}</div>
+                      </div>
+                      <FileMessage 
+                        :file-info="parseFileInfo(messageItem)" 
+                        :is-encrypted="true" 
+                      />
+                    </div>
+                  </div>
+
                   <div
                     style="
                       width: 100%;
@@ -675,6 +727,62 @@
                               已发送
                             </div>
                           </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- 右侧加密图片消息 (type == 4) -->
+                    <div
+                      v-if="
+                        messageItem.send_id == userInfo.uuid &&
+                        messageItem.type == 4
+                      "
+                      class="right-message"
+                    >
+                      <div class="right-message-right">
+                        <el-image
+                          :src="userInfo.avatar"
+                          style="width: 40px; height: 40px; margin-left: 10px; margin-right: 10px; margin-top: 10px;"
+                        />
+                      </div>
+                      <div class="right-message-left">
+                        <div class="right-message-left-top">
+                          <div class="right-message-contactname">{{ userInfo.nickname }}</div>
+                          <div class="right-message-time">{{ messageItem.created_at }}</div>
+                        </div>
+                        <div style="display: flex; flex-direction: row-reverse">
+                          <FileMessage 
+                            :file-info="parseFileInfo(messageItem)" 
+                            :is-encrypted="true" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- 右侧加密文件消息 (type == 5) -->
+                    <div
+                      v-if="
+                        messageItem.send_id == userInfo.uuid &&
+                        messageItem.type == 5
+                      "
+                      class="right-message"
+                    >
+                      <div class="right-message-right">
+                        <el-image
+                          :src="userInfo.avatar"
+                          style="width: 40px; height: 40px; margin-left: 10px; margin-right: 10px; margin-top: 10px;"
+                        />
+                      </div>
+                      <div class="right-message-left">
+                        <div class="right-message-left-top">
+                          <div class="right-message-contactname">{{ userInfo.nickname }}</div>
+                          <div class="right-message-time">{{ messageItem.created_at }}</div>
+                        </div>
+                        <div style="display: flex; flex-direction: row-reverse">
+                          <FileMessage 
+                            :file-info="parseFileInfo(messageItem)" 
+                            :is-encrypted="true" 
+                          />
                         </div>
                       </div>
                     </div>
@@ -895,6 +1003,13 @@
             </div>
           </el-main>
           <el-footer>
+            <div class="chat-footer-toolbar">
+              <FileUpload 
+                v-if="contactInfo.contact_id && contactInfo.contact_id.startsWith('U')"
+                @upload-complete="handleFileUploadComplete"
+                @upload-error="handleFileUploadError"
+              />
+            </div>
             <div class="chat-input">
               <el-input
                 v-model="chatMessage"
@@ -923,6 +1038,8 @@ import axios from "@/utils/axios";
 import Modal from "@/components/Modal.vue";
 import SmallModal from "@/components/SmallModal.vue";
 import NavigationModal from "@/components/NavigationModal.vue";
+import FileUpload from "@/components/FileUpload.vue";
+import FileMessage from "@/components/FileMessage.vue";
 import { ElMessage, ElMessageBox, ElScrollbar } from "element-plus";
 import { ElNotification } from "element-plus";
 import {
@@ -939,6 +1056,8 @@ export default {
     Modal,
     SmallModal,
     NavigationModal,
+    FileUpload,
+    FileMessage,
   },
 
   setup() {
@@ -1801,6 +1920,178 @@ export default {
       scrollToBottom();
     };
 
+    // 处理加密文件上传完成
+    const handleFileUploadComplete = async (uploadResult) => {
+      console.log('📁 加密文件上传完成:', uploadResult);
+      
+      const contactId = data.contactInfo.contact_id;
+      if (!contactId || !contactId.startsWith('U')) {
+        ElMessage.error('加密文件只能发送给单聊好友');
+        return;
+      }
+
+      try {
+        // 1. 检查是否有加密会话
+        const sessionExists = await hasSession(contactId);
+        let isPreKeyMessage = false;
+        let initData = null;
+
+        if (!sessionExists) {
+          console.log("会话不存在，正在建立加密会话...");
+          ElMessage.info("正在建立安全连接...");
+
+          // 获取对方的公钥束并建立会话
+          const response = await axios.get("/crypto/getPublicKeyBundle", {
+            params: { user_id: contactId },
+          });
+
+          if (response.data.code !== 200) {
+            throw new Error(response.data.message || "获取公钥束失败");
+          }
+
+          const publicKeyBundle = response.data.data;
+          initData = await createSession(
+            store.state.masterKey,
+            contactId,
+            publicKeyBundle
+          );
+          isPreKeyMessage = true;
+          console.log("✅ 加密会话已建立");
+        }
+
+        // 2. 构造文件元数据
+        const fileMetadata = JSON.stringify({
+          type: uploadResult.width ? 'image' : 'file',
+          ossKey: uploadResult.ossKey,
+          fileKey: uploadResult.fileKey,
+          fileIv: uploadResult.fileIv,
+          fileHash: uploadResult.fileHash,
+          fileName: uploadResult.fileName,
+          fileSize: uploadResult.fileSize,
+          mimeType: uploadResult.mimeType,
+          width: uploadResult.width || null,
+          height: uploadResult.height || null,
+          thumbnail: uploadResult.thumbnail || null,
+        });
+
+        // 3. 使用 Signal 协议加密文件元数据
+        const encryptedMessage = await encryptAndSendMessage(contactId, fileMetadata);
+        console.log("文件元数据已加密:", encryptedMessage);
+
+        // 4. 构造请求数据
+        const messageType = uploadResult.width ? 4 : 5; // 4=加密图片, 5=加密文件
+        const requestData = {
+          session_id: data.sessionId,
+          receiver_id: contactId,
+          message_type: isPreKeyMessage ? "PreKeyMessage" : "SignalMessage",
+          file_message_type: messageType,
+          ...encryptedMessage,
+        };
+
+        // 如果是 PreKeyMessage，添加初始化数据
+        if (isPreKeyMessage && initData) {
+          requestData.sender_identity_key = initData.identity_key;
+          requestData.sender_identity_key_curve25519 = initData.identity_key_curve25519;
+          requestData.sender_ephemeral_key = initData.ephemeral_key;
+          requestData.used_one_time_pre_key_id = initData.used_one_time_pre_key_id !== undefined 
+            ? initData.used_one_time_pre_key_id 
+            : initData.usedOneTimePreKeyId;
+        }
+
+        // 5. 发送到服务器
+        console.log("发送加密文件消息到服务器...");
+        const response = await axios.post("/message/sendEncryptedMessage", requestData);
+
+        if (response.data.code === 200) {
+          console.log("✅ 加密文件消息发送成功");
+          ElMessage.success(uploadResult.width ? '图片发送成功' : '文件发送成功');
+          
+          // 保存发送方的明文元数据到 IndexedDB
+          let messageId = response.data.data?.message_id;
+          if (messageId) {
+            messageId = messageId.trim();
+            try {
+              const { put, STORES } = await import('@/crypto/cryptoStore');
+              await put(STORES.SENT_MESSAGES, {
+                message_id: messageId,
+                plaintext: fileMetadata,
+                contact_id: contactId,
+                created_at: Date.now(),
+              });
+            } catch (error) {
+              console.error('保存文件消息元数据失败:', error);
+            }
+          }
+          
+          // 乐观更新：立即显示消息
+          if (messageId) {
+            const now = new Date();
+            const formatDateTime = (date) => {
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              const hours = String(date.getHours()).padStart(2, '0');
+              const minutes = String(date.getMinutes()).padStart(2, '0');
+              const seconds = String(date.getSeconds()).padStart(2, '0');
+              return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+            };
+
+            if (data.messageList == null) {
+              data.messageList = [];
+            }
+
+            data.messageList.push({
+              uuid: messageId,
+              send_id: data.userInfo.uuid,
+              send_name: data.userInfo.nickname,
+              send_avatar: data.userInfo.avatar,
+              receive_id: contactId,
+              type: messageType,
+              content: fileMetadata,
+              url: "",
+              file_type: uploadResult.mimeType,
+              file_name: uploadResult.fileName,
+              file_size: uploadResult.fileSize,
+              created_at: formatDateTime(now),
+              is_encrypted: true,
+              encryption_version: 1,
+            });
+
+            scrollToBottom();
+          }
+        } else {
+          throw new Error(response.data.message || "发送失败");
+        }
+      } catch (error) {
+        console.error("加密文件消息发送失败:", error);
+        ElMessage.error("发送失败：" + error.message);
+      }
+    };
+
+    // 处理文件上传错误
+    const handleFileUploadError = (error) => {
+      console.error("文件上传错误:", error);
+      ElMessage.error("文件上传失败：" + error.message);
+    };
+
+    // 解析文件信息（从消息内容中）
+    const parseFileInfo = (messageItem) => {
+      try {
+        // 如果 content 是字符串，尝试解析为 JSON
+        if (typeof messageItem.content === 'string') {
+          return JSON.parse(messageItem.content);
+        }
+        return messageItem.content;
+      } catch (error) {
+        console.error('解析文件信息失败:', error);
+        return {
+          type: messageItem.type === 4 ? 'image' : 'file',
+          fileName: messageItem.file_name || '未知文件',
+          fileSize: messageItem.file_size || 0,
+        };
+      }
+    };
+
     const getMessageList = async () => {
       try {
         console.log(data.contactInfo);
@@ -2558,6 +2849,9 @@ export default {
       beforeFileUpload,
       downloadFile,
       getFileSize,
+      handleFileUploadComplete,
+      handleFileUploadError,
+      parseFileInfo,
       showUpdateGroupInfoModal,
       quitUpdateGroupInfoModal,
       beforeAvatarUpload,
@@ -2594,6 +2888,14 @@ export default {
 </script>
 
 <style scoped>
+.chat-footer-toolbar {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid #ebeef5;
+  gap: 8px;
+}
+
 .sessionlist-header {
   display: flex;
   flex-direction: row;

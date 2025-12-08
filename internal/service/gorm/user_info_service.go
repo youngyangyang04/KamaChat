@@ -8,7 +8,6 @@ import (
 	"kama_chat_server/internal/dto/respond"
 	"kama_chat_server/internal/model"
 	myredis "kama_chat_server/internal/service/redis"
-	"kama_chat_server/internal/service/sms"
 	"kama_chat_server/pkg/constants"
 	"kama_chat_server/pkg/enum/user_info/user_status_enum"
 	jwtutil "kama_chat_server/pkg/util/jwt"
@@ -153,11 +152,6 @@ func (u *userInfoService) SmsLogin(req request.SmsLoginRequest) (string, *respon
 	loginRsp.CreatedAt = fmt.Sprintf("%d.%d.%d", year, month, day)
 
 	return "登陆成功", loginRsp, 0
-}
-
-// SendSmsCode 发送短信验证码 - 验证码登录
-func (u *userInfoService) SendSmsCode(telephone string) (string, int) {
-	return sms.VerificationCode(telephone)
 }
 
 // checkTelephoneExist 检查手机号是否存在

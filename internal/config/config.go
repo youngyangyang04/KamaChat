@@ -2,6 +2,7 @@ package config
 
 import (
 	"log"
+	"os"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -31,13 +32,6 @@ type RedisConfig struct {
 	Db       int    `toml:"db"`
 }
 
-type AuthCodeConfig struct {
-	AccessKeyID     string `toml:"accessKeyID"`
-	AccessKeySecret string `toml:"accessKeySecret"`
-	SignName        string `toml:"signName"`
-	TemplateCode    string `toml:"templateCode"`
-}
-
 type LogConfig struct {
 	LogPath string `toml:"logPath"`
 }
@@ -57,6 +51,19 @@ type StaticSrcConfig struct {
 	StaticFilePath   string `toml:"staticFilePath"`
 }
 
+type OSSConfig struct {
+	AccessKeyID           string `toml:"accessKeyID"`
+	AccessKeySecret       string `toml:"accessKeySecret"`
+	STSRoleArn            string `toml:"stsRoleArn"`
+	Endpoint              string `toml:"endpoint"`
+	Bucket                string `toml:"bucket"`
+	Region                string `toml:"region"`
+	UploadExpireSeconds   int64  `toml:"uploadExpireSeconds"`
+	DownloadExpireSeconds int64  `toml:"downloadExpireSeconds"`
+	MaxFileSize           int64  `toml:"maxFileSize"`
+	EncryptedFilePrefix   string `toml:"encryptedFilePrefix"`
+}
+
 type JWTConfig struct {
 	SecretKey    string `toml:"secretKey"`
 	ExpireHours  int    `toml:"expireHours"`
@@ -67,11 +74,11 @@ type Config struct {
 	MainConfig       `toml:"mainConfig"`
 	PostgresqlConfig `toml:"postgresqlConfig"`
 	RedisConfig      `toml:"redisConfig"`
-	AuthCodeConfig   `toml:"authCodeConfig"`
 	LogConfig        `toml:"logConfig"`
 	KafkaConfig      `toml:"kafkaConfig"`
 	StaticSrcConfig  `toml:"staticSrcConfig"`
 	JWTConfig        `toml:"jwtConfig"`
+	OSSConfig        `toml:"ossConfig"`
 }
 
 var config *Config
@@ -87,7 +94,35 @@ func LoadConfig() error {
 	// 	log.Fatal(err.Error())
 	// 	return err
 	// }
+
+	// 从环境变量加载敏感配置（优先级高于配置文件）
+	loadSensitiveConfigFromEnv()
+
 	return nil
+}
+
+// loadSensitiveConfigFromEnv 从环境变量加载敏感配置
+// 环境变量优先级高于配置文件，适用于开源项目避免泄露敏感信息
+func loadSensitiveConfigFromEnv() {
+	// OSS 配置
+	if v := os.Getenv("OSS_ACCESS_KEY_ID"); v != "" {
+		config.OSSConfig.AccessKeyID = v
+	}
+	if v := os.Getenv("OSS_ACCESS_KEY_SECRET"); v != "" {
+		config.OSSConfig.AccessKeySecret = v
+	}
+	if v := os.Getenv("OSS_STS_ROLE_ARN"); v != "" {
+		config.OSSConfig.STSRoleArn = v
+	}
+	if v := os.Getenv("OSS_ENDPOINT"); v != "" {
+		config.OSSConfig.Endpoint = v
+	}
+	if v := os.Getenv("OSS_BUCKET"); v != "" {
+		config.OSSConfig.Bucket = v
+	}
+	if v := os.Getenv("OSS_REGION"); v != "" {
+		config.OSSConfig.Region = v
+	}
 }
 
 func GetConfig() *Config {

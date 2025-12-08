@@ -161,18 +161,3 @@ func SetAdmin(c *gin.Context) {
 	message, ret := gorm.UserInfoService.SetAdmin(req.UuidList, req.IsAdmin)
 	JsonBack(c, message, ret, nil)
 }
-
-// SendSmsCode 发送短信验证码
-func SendSmsCode(c *gin.Context) {
-	var req request.SendSmsCodeRequest
-	if err := c.BindJSON(&req); err != nil {
-		zlog.Error(err.Error())
-		c.JSON(http.StatusOK, gin.H{
-			"code":    500,
-			"message": constants.SYSTEM_ERROR,
-		})
-		return
-	}
-	message, ret := gorm.UserInfoService.SendSmsCode(req.Telephone)
-	JsonBack(c, message, ret, nil)
-}

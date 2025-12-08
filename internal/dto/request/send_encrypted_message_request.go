@@ -2,9 +2,10 @@ package request
 
 // SendEncryptedMessageRequest 发送加密消息请求
 type SendEncryptedMessageRequest struct {
-	SessionId   string `json:"session_id" binding:"required"`
-	ReceiverId  string `json:"receiver_id" binding:"required"`
-	MessageType string `json:"message_type" binding:"required"` // "PreKeyMessage" 或 "SignalMessage"
+	SessionId       string `json:"session_id" binding:"required"`
+	ReceiverId      string `json:"receiver_id" binding:"required"`
+	MessageType     string `json:"message_type" binding:"required"` // "PreKeyMessage" 或 "SignalMessage"
+	FileMessageType *int   `json:"file_message_type,omitempty"`     // 可选：4=加密图片, 5=加密文件
 
 	// PreKeyMessage 专用字段（首次会话）
 	SenderIdentityKey           string `json:"sender_identity_key,omitempty"`
