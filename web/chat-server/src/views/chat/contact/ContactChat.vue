@@ -1017,7 +1017,8 @@
                 show-word-limit
                 maxlength="500"
                 :autosize="{ minRows: 7.9, maxRows: 7 }"
-                placeholder="请输入内容"
+                placeholder="请输入内容（Enter发送，Shift+Enter换行）"
+                @keydown="handleInputKeydown"
               />
             </div>
             <div class="chat-send">
@@ -1602,6 +1603,16 @@ export default {
       }
       router.push("/chat/sessionlist");
     };
+
+    // 处理输入框键盘事件：Enter 发送，Shift+Enter 换行
+    const handleInputKeydown = (event) => {
+      if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault(); // 阻止默认换行
+        sendMessage();
+      }
+      // Shift+Enter 保持默认行为（换行）
+    };
+
     const sendMessage = async () => {
       // 检查消息内容
       if (!data.chatMessage || data.chatMessage.trim() === "") {
@@ -2838,6 +2849,7 @@ export default {
       preToDeleteContact,
       preToBlackContact,
       sendMessage,
+      handleInputKeydown,
       getMessageList,
       getGroupMessageList,
       handleAgree,
@@ -3127,7 +3139,8 @@ h3 {
   color: rgb(74, 72, 72);
   display: inline-block;
   max-width: 400px;
-  white-space: normal; /* 允许文本换行 */
+  white-space: pre-wrap; /* 保留换行符并允许自动换行 */
+  word-break: break-word; /* 长单词换行 */
   font-family: Arial, Helvetica, sans-serif;
   border-radius: 6px;
   padding: 3px;
@@ -3144,7 +3157,8 @@ h3 {
   color: rgb(74, 72, 72);
   display: inline-block;
   max-width: 400px;
-  white-space: normal; /* 允许文本换行 */
+  white-space: pre-wrap; /* 保留换行符并允许自动换行 */
+  word-break: break-word; /* 长单词换行 */
   font-family: Arial, Helvetica, sans-serif;
   border-radius: 6px;
   padding: 3px;
