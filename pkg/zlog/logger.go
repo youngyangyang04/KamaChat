@@ -4,9 +4,10 @@ import (
 	"github.com/natefinch/lumberjack"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"kama_chat_server/internal/config"
+	"gochat/internal/config"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 )
 
@@ -21,9 +22,16 @@ func init() {
 	// 日志encoder还是JSONEncoder，把日志行格式化成JSON格式
 	encoder := zapcore.NewJSONEncoder(encoderConfig)
 	conf := config.GetConfig()
-	logPath = conf.LogPath
-	file, _ := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 644)
-	fileWriteSyncer := zapcore.AddSync(file)
+	logPath = conf.LogConfig.LogPath
+	logDir := filepath.Dir(logPath)
+	if logDir != "." && logDir != "" {
+		_ = os.MkdirAll(logDir, 0o755)
+	}
+
+	fileWriteSyncer := zapcore.AddSync(os.Stdout)
+	if file, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o644); err == nil {
+		fileWriteSyncer = zapcore.AddSync(file)
+	}
 	core := zapcore.NewTee(
 		zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), zapcore.DebugLevel),
 		zapcore.NewCore(encoder, fileWriteSyncer, zapcore.DebugLevel),

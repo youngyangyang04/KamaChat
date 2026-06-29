@@ -1,5 +1,5 @@
 {
-  "name": "kama-chat-server",
+  "name": "gochat-web",
   "version": "0.1.0",
   "private": true,
   "scripts": {

@@ -1,0 +1,124 @@
+name: gochat
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: gochat-mysql
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: gochat
+      MYSQL_ROOT_HOST: "%"
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - ${GOCHAT_MYSQL_DATA:-gochat_mysql-data}:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    container_name: gochat-redis
+    command: ["redis-server", "--appendonly", "yes"]
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "6379:6379"
+    volumes:
+      - ${GOCHAT_REDIS_DATA:-gochat_redis-data}:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gochat-backend
+    environment:
+      APP_ENV: docker
+      TZ: Asia/Shanghai
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ${GOCHAT_BACKEND_LOGS:-gochat_backend-logs}:/app/logs
+      - ${GOCHAT_BACKEND_AVATARS:-gochat_backend-avatars}:/app/static/avatars
+      - ${GOCHAT_BACKEND_FILES:-gochat_backend-files}:/app/static/files
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8000/wss | grep -q 'clientId获取失败'"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./web/chat-server
+      dockerfile: Dockerfile
+      args:
+        VUE_APP_API_BASE_URL: ${FRONTEND_API_BASE_URL:-http://localhost:8000}
+        VUE_APP_WS_BASE_URL: ${FRONTEND_WS_BASE_URL:-ws://localhost:8000}
+    container_name: gochat-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+
+  seed:
+    image: mysql:8.0
+    container_name: gochat-seed
+    restart: "no"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    command:
+      - /bin/sh
+      - -c
+      - >-
+        until mysql -hmysql -uroot -p123456 gochat -e "SELECT 1 FROM user_info LIMIT 1" >/dev/null 2>&1;
+        do echo "waiting for user_info table..."; sleep 2; done;
+        mysql -hmysql -uroot -p123456 gochat -e "
+        INSERT INTO user_info
+        (uuid, nickname, telephone, email, avatar, password, birthday, signature, created_at, is_admin, status)
+        SELECT
+        'U10000000001',
+        'testuser',
+        '13600000000',
+        '',
+        'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
+        '123456',
+        '',
+        '',
+        NOW(),
+        0,
+        0
+        FROM DUAL
+        WHERE NOT EXISTS (
+          SELECT 1 FROM user_info WHERE telephone = '13600000000'
+        );
+        "
+
+volumes:
+  mysql-data:
+  redis-data:
+  backend-logs:
+  backend-avatars:
+  backend-files:

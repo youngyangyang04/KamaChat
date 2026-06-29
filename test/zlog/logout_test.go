@@ -2,7 +2,7 @@ package zlog
 
 import (
 	"go.uber.org/zap"
-	"kama_chat_server/pkg/zlog"
+	"gochat/pkg/zlog"
 	"testing"
 )
 

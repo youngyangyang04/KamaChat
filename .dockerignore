@@ -1,0 +1,11 @@
+.git
+.gitignore
+.idea
+node_modules
+web/chat-server/node_modules
+web/chat-server/dist
+dist
+logs
+static/avatars
+static/files
+*.log

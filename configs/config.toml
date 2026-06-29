@@ -1,14 +1,20 @@
-[mainConfig]
-appName = "your app name"
+[serverConfig]
+appName = "gochat"
 host = "0.0.0.0"
 port = 8000
+tlsEnabled = false
+sslRedirect = false
+tlsCertFile = ""
+tlsKeyFile = ""
 
 [mysqlConfig]
 host = "127.0.0.1"
 port = 3306
 user = "root"
 password = "123456"
-databaseName = "your database name"
+databaseName = "gochat"
+network = "tcp"
+socketPath = "/var/run/mysqld/mysqld.sock"
 
 [redisConfig]
 host = "127.0.0.1"
@@ -17,22 +23,22 @@ password = ""
 db = 0
 
 [authCodeConfig]
-accessKeyID = "your accessKeyID in alibaba cloud"
-accessKeySecret = "your accessKeySecret in alibaba cloud"
+accessKeyID = ""
+accessKeySecret = ""
 signName = "阿里云短信测试"
 templateCode = "SMS_154950909"
 
 [logConfig]
-logPath = "your log path"
+logPath = "./logs/gochat.log"
 
 [kafkaConfig]
-messageMode = "channel"# 消息模式 channel or kafka
-hostPort = "127.0.0.1:9092" # "127.0.0.1:9092,127.0.0.1:9093,127.0.0.1:9094" 多个kafka服务器
+messageMode = "channel" # channel or kafka
+hostPort = "127.0.0.1:9092"
 loginTopic = "login"
 chatTopic = "chat_message"
 logoutTopic = "logout"
-partition = 0 # kafka partition
-timeout = 1 # 单位秒
+partition = 0
+timeout = 1
 
 [staticSrcConfig]
 staticAvatarPath = "./static/avatars"

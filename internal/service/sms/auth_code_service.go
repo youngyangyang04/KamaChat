@@ -2,17 +2,18 @@ package sms
 
 import (
 	"fmt"
+	"gochat/internal/config"
+	"gochat/internal/service/redis"
+	"gochat/pkg/constants"
+	"gochat/pkg/util/random"
+	"gochat/pkg/zlog"
+	"strconv"
+	"time"
+
 	openapi "github.com/alibabacloud-go/darabonba-openapi/v2/client"
 	dysmsapi20170525 "github.com/alibabacloud-go/dysmsapi-20170525/v4/client"
 	util "github.com/alibabacloud-go/tea-utils/v2/service"
 	"github.com/alibabacloud-go/tea/tea"
-	"kama_chat_server/internal/config"
-	"kama_chat_server/internal/service/redis"
-	"kama_chat_server/pkg/constants"
-	"kama_chat_server/pkg/util/random"
-	"kama_chat_server/pkg/zlog"
-	"strconv"
-	"time"
 )
 
 var smsClient *dysmsapi20170525.Client
@@ -21,18 +22,18 @@ var smsClient *dysmsapi20170525.Client
 func createClient() (result *dysmsapi20170525.Client, err error) {
 	// 工程代码泄露可能会导致 AccessKey 泄露，并威胁账号下所有资源的安全性。以下代码示例仅供参考。
 	// 建议使用更安全的 STS 方式，更多鉴权访问方式请参见：https://help.aliyun.com/document_detail/378661.html。
-	accessKeyID := config.GetConfig().AccessKeyID
-	accessKeySecret := config.GetConfig().AccessKeySecret
+	accessKeyID := config.GetConfig().AuthCodeConfig.AccessKeyID
+	accessKeySecret := config.GetConfig().AuthCodeConfig.AccessKeySecret
 	if smsClient == nil {
-		config := &openapi.Config{
+		openapiConfig := &openapi.Config{
 			// 必填，请确保代码运行环境设置了环境变量 ALIBABA_CLOUD_ACCESS_KEY_ID。
 			AccessKeyId: tea.String(accessKeyID),
 			// 必填，请确保代码运行环境设置了环境变量 ALIBABA_CLOUD_ACCESS_KEY_SECRET。
 			AccessKeySecret: tea.String(accessKeySecret),
 		}
 		// Endpoint 请参考 https://api.aliyun.com/product/Dysmsapi
-		config.Endpoint = tea.String("dysmsapi.aliyuncs.com")
-		smsClient, err = dysmsapi20170525.NewClient(config)
+		openapiConfig.Endpoint = tea.String("dysmsapi.aliyuncs.com")
+		smsClient, err = dysmsapi20170525.NewClient(openapiConfig)
 	}
 	return smsClient, err
 }

@@ -2,10 +2,10 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
-	"kama_chat_server/internal/dto/request"
-	"kama_chat_server/internal/service/gorm"
-	"kama_chat_server/pkg/constants"
-	"kama_chat_server/pkg/zlog"
+	"gochat/internal/dto/request"
+	"gochat/internal/service/gorm"
+	"gochat/pkg/constants"
+	"gochat/pkg/zlog"
 	"net/http"
 )
 

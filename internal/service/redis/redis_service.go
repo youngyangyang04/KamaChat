@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-redis/redis/v8"
-	"kama_chat_server/internal/config"
-	"kama_chat_server/pkg/zlog"
+	"gochat/internal/config"
+	"gochat/pkg/zlog"
 	"log"
 	"strconv"
 	"time"
@@ -20,7 +20,7 @@ func init() {
 	host := conf.RedisConfig.Host
 	port := conf.RedisConfig.Port
 	password := conf.RedisConfig.Password
-	db := conf.Db
+	db := conf.RedisConfig.Db
 	addr := host + ":" + strconv.Itoa(port)
 
 	redisClient = redis.NewClient(&redis.Options{

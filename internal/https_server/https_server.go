@@ -3,23 +3,26 @@ package https_server
 import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	v1 "kama_chat_server/api/v1"
-	"kama_chat_server/internal/config"
-	"kama_chat_server/pkg/ssl"
+	v1 "gochat/api/v1"
+	"gochat/internal/config"
+	"gochat/pkg/ssl"
 )
 
 var GE *gin.Engine
 
 func init() {
+	conf := config.GetConfig()
 	GE = gin.Default()
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = []string{"*"}
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
 	corsConfig.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 	GE.Use(cors.New(corsConfig))
-	GE.Use(ssl.TlsHandler(config.GetConfig().MainConfig.Host, config.GetConfig().MainConfig.Port))
-	GE.Static("/static/avatars", config.GetConfig().StaticAvatarPath)
-	GE.Static("/static/files", config.GetConfig().StaticFilePath)
+	if conf.ServerConfig.SSLRedirect {
+		GE.Use(ssl.TlsHandler(conf.ServerConfig.Host, conf.ServerConfig.Port))
+	}
+	GE.Static("/static/avatars", conf.StaticSrcConfig.StaticAvatarPath)
+	GE.Static("/static/files", conf.StaticSrcConfig.StaticFilePath)
 	GE.POST("/login", v1.Login)
 	GE.POST("/register", v1.Register)
 	GE.POST("/user/updateUserInfo", v1.UpdateUserInfo)

@@ -1,0 +1,45 @@
+[serverConfig]
+appName = "gochat"
+host = "0.0.0.0"
+port = 8000
+tlsEnabled = false
+sslRedirect = false
+tlsCertFile = ""
+tlsKeyFile = ""
+
+[mysqlConfig]
+host = "127.0.0.1"
+port = 3306
+user = "root"
+password = "123456"
+databaseName = "gochat"
+network = "tcp"
+socketPath = "/var/run/mysqld/mysqld.sock"
+
+[redisConfig]
+host = "127.0.0.1"
+port = 6379
+password = ""
+db = 0
+
+[authCodeConfig]
+accessKeyID = ""
+accessKeySecret = ""
+signName = "阿里云短信测试"
+templateCode = "SMS_154950909"
+
+[logConfig]
+logPath = "./logs/gochat.log"
+
+[kafkaConfig]
+messageMode = "channel"
+hostPort = "127.0.0.1:9092"
+loginTopic = "login"
+chatTopic = "chat_message"
+logoutTopic = "logout"
+partition = 0
+timeout = 1
+
+[staticSrcConfig]
+staticAvatarPath = "./static/avatars"
+staticFilePath = "./static/files"

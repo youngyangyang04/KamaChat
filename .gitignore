@@ -22,6 +22,9 @@
 
 *_local.go
 *_local.toml
+configs/config.dev.toml
+configs/config.test.toml
+configs/config.prod.toml
 
 vendor/*
 
@@ -38,3 +41,7 @@ internal/service/kafka/start.bat
 *.sh
 
 *.ext
+
+/.env
+cmd/**/logs
+cmd/**/*_backend

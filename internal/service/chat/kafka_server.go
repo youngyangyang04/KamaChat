@@ -6,17 +6,17 @@ import (
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/websocket"
-	"kama_chat_server/internal/dao"
-	"kama_chat_server/internal/dto/request"
-	"kama_chat_server/internal/dto/respond"
-	"kama_chat_server/internal/model"
-	"kama_chat_server/internal/service/kafka"
-	myredis "kama_chat_server/internal/service/redis"
-	"kama_chat_server/pkg/constants"
-	"kama_chat_server/pkg/enum/message/message_status_enum"
-	"kama_chat_server/pkg/enum/message/message_type_enum"
-	"kama_chat_server/pkg/util/random"
-	"kama_chat_server/pkg/zlog"
+	"gochat/internal/dao"
+	"gochat/internal/dto/request"
+	"gochat/internal/dto/respond"
+	"gochat/internal/model"
+	"gochat/internal/service/kafka"
+	myredis "gochat/internal/service/redis"
+	"gochat/pkg/constants"
+	"gochat/pkg/enum/message/message_status_enum"
+	"gochat/pkg/enum/message/message_type_enum"
+	"gochat/pkg/util/random"
+	"gochat/pkg/zlog"
 	"log"
 	"os"
 	"sync"
@@ -459,8 +459,8 @@ func (k *KafkaServer) Start() {
 				k.mutex.Lock()
 				k.Clients[client.Uuid] = client
 				k.mutex.Unlock()
-				zlog.Debug(fmt.Sprintf("欢迎来到kama聊天服务器，亲爱的用户%s\n", client.Uuid))
-				err := client.Conn.WriteMessage(websocket.TextMessage, []byte("欢迎来到kama聊天服务器"))
+				zlog.Debug(fmt.Sprintf("欢迎来到GoChat聊天服务器，亲爱的用户%s\n", client.Uuid))
+				err := client.Conn.WriteMessage(websocket.TextMessage, []byte("欢迎来到GoChat聊天服务器"))
 				if err != nil {
 					zlog.Error(err.Error())
 				}

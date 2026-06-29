@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
+	"gochat/internal/config"
+	"gochat/internal/dao"
+	"gochat/internal/dto/respond"
+	"gochat/internal/model"
+	myredis "gochat/internal/service/redis"
+	"gochat/pkg/constants"
+	"gochat/pkg/zlog"
 	"io"
-	"kama_chat_server/internal/config"
-	"kama_chat_server/internal/dao"
-	"kama_chat_server/internal/dto/respond"
-	"kama_chat_server/internal/model"
-	myredis "kama_chat_server/internal/service/redis"
-	"kama_chat_server/pkg/constants"
-	"kama_chat_server/pkg/zlog"
 	"os"
 	"path/filepath"
 )
@@ -136,7 +136,7 @@ func (m *messageService) UploadAvatar(c *gin.Context) (string, int) {
 		// 原来Filename应该是213451545.xxx，将Filename修改为avatar_ownerId.xxx
 		ext := filepath.Ext(fileHeader.Filename)
 		zlog.Info(ext)
-		localFileName := config.GetConfig().StaticAvatarPath + "/" + fileHeader.Filename
+		localFileName := config.GetConfig().StaticSrcConfig.StaticAvatarPath + "/" + fileHeader.Filename
 		out, err := os.Create(localFileName)
 		if err != nil {
 			zlog.Error(err.Error())
@@ -170,7 +170,7 @@ func (m *messageService) UploadFile(c *gin.Context) (string, int) {
 		// 原来Filename应该是213451545.xxx，将Filename修改为avatar_ownerId.xxx
 		ext := filepath.Ext(fileHeader.Filename)
 		zlog.Info(ext)
-		localFileName := config.GetConfig().StaticFilePath + "/" + fileHeader.Filename
+		localFileName := config.GetConfig().StaticSrcConfig.StaticFilePath + "/" + fileHeader.Filename
 		out, err := os.Create(localFileName)
 		if err != nil {
 			zlog.Error(err.Error())

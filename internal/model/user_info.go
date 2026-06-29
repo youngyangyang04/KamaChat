@@ -19,8 +19,8 @@ type UserInfo struct {
 	Birthday      string         `gorm:"column:birthday;type:char(8);comment:生日"`
 	CreatedAt     time.Time      `gorm:"column:created_at;index;type:datetime;not null;comment:创建时间"`
 	DeletedAt     gorm.DeletedAt `gorm:"column:deleted_at;type:datetime;comment:删除时间"`
-	LastOnlineAt  sql.NullTime      `gorm:"column:last_online_at;type:datetime;comment:上次登录时间"`
-	LastOfflineAt sql.NullTime      `gorm:"column:last_offline_at;type:datetime;comment:最近离线时间"`
+	LastOnlineAt  sql.NullTime   `gorm:"column:last_online_at;type:datetime;comment:上次登录时间"`
+	LastOfflineAt sql.NullTime   `gorm:"column:last_offline_at;type:datetime;comment:最近离线时间"`
 	IsAdmin       int8           `gorm:"column:is_admin;not null;comment:是否是管理员，0.不是，1.是"`
 	Status        int8           `gorm:"column:status;index;not null;comment:状态，0.正常，1.禁用"`
 }
