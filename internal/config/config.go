@@ -43,10 +43,20 @@ type RedisConfig struct {
 }
 
 type AuthCodeConfig struct {
-	AccessKeyID     string `toml:"accessKeyID"`
-	AccessKeySecret string `toml:"accessKeySecret"`
-	SignName        string `toml:"signName"`
-	TemplateCode    string `toml:"templateCode"`
+	AccessKeyID      string `toml:"accessKeyID"`
+	AccessKeySecret  string `toml:"accessKeySecret"`
+	SignName         string `toml:"signName"`
+	TemplateCode     string `toml:"templateCode"`
+	SchemeName       string `toml:"schemeName"`
+	CountryCode      string `toml:"countryCode"`
+	CodeLength       int    `toml:"codeLength"`
+	ValidTime        int    `toml:"validTime"`
+	DuplicatePolicy  int    `toml:"duplicatePolicy"`
+	Interval         int    `toml:"interval"`
+	CodeType         int    `toml:"codeType"`
+	CaseAuthPolicy   int    `toml:"caseAuthPolicy"`
+	ReturnVerifyCode bool   `toml:"returnVerifyCode"`
+	AutoRetry        int    `toml:"autoRetry"`
 }
 
 type LogConfig struct {
@@ -286,6 +296,8 @@ func applyEnvOverrides(cfg *Config, lookupEnv func(string) (string, bool)) error
 		{envName: "GOCHAT_REDIS_PASSWORD", target: &cfg.RedisConfig.Password},
 		{envName: "GOCHAT_TLS_CERT_FILE", target: &cfg.ServerConfig.TLSCertFile},
 		{envName: "GOCHAT_TLS_KEY_FILE", target: &cfg.ServerConfig.TLSKeyFile},
+		{envName: "GOCHAT_SMS_ACCESS_KEY_ID", target: &cfg.AuthCodeConfig.AccessKeyID},
+		{envName: "GOCHAT_SMS_ACCESS_KEY_SECRET", target: &cfg.AuthCodeConfig.AccessKeySecret},
 	}
 
 	for _, item := range stringTargets {
@@ -426,5 +438,29 @@ func (cfg *Config) normalize() {
 	}
 	if cfg.StaticSrcConfig.StaticFilePath == "" {
 		cfg.StaticSrcConfig.StaticFilePath = "./static/files"
+	}
+	if cfg.AuthCodeConfig.CountryCode == "" {
+		cfg.AuthCodeConfig.CountryCode = "86"
+	}
+	if cfg.AuthCodeConfig.CodeLength == 0 {
+		cfg.AuthCodeConfig.CodeLength = 6
+	}
+	if cfg.AuthCodeConfig.ValidTime == 0 {
+		cfg.AuthCodeConfig.ValidTime = 300
+	}
+	if cfg.AuthCodeConfig.Interval == 0 {
+		cfg.AuthCodeConfig.Interval = 60
+	}
+	if cfg.AuthCodeConfig.DuplicatePolicy == 0 {
+		cfg.AuthCodeConfig.DuplicatePolicy = 1
+	}
+	if cfg.AuthCodeConfig.CodeType == 0 {
+		cfg.AuthCodeConfig.CodeType = 1
+	}
+	if cfg.AuthCodeConfig.CaseAuthPolicy == 0 {
+		cfg.AuthCodeConfig.CaseAuthPolicy = 1
+	}
+	if cfg.AuthCodeConfig.AutoRetry == 0 {
+		cfg.AuthCodeConfig.AutoRetry = 1
 	}
 }

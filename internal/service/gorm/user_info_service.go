@@ -103,21 +103,8 @@ func (u *userInfoService) SmsLogin(req request.SmsLoginRequest) (string, *respon
 		return constants.SYSTEM_ERROR, nil, -1
 	}
 
-	key := "auth_code_" + req.Telephone
-	code, err := myredis.GetKey(key)
-	if err != nil {
-		zlog.Error(err.Error())
-		return constants.SYSTEM_ERROR, nil, -1
-	}
-	if code != req.SmsCode {
-		message := "验证码不正确，请重试"
-		zlog.Info(message)
-		return message, nil, -2
-	} else {
-		if err := myredis.DelKeyIfExists(key); err != nil {
-			zlog.Error(err.Error())
-			return constants.SYSTEM_ERROR, nil, -1
-		}
+	if message, ret := sms.CheckVerificationCode(req.Telephone, req.SmsCode); ret != 0 {
+		return message, nil, ret
 	}
 
 	loginRsp := &respond.LoginRespond{
@@ -140,7 +127,7 @@ func (u *userInfoService) SmsLogin(req request.SmsLoginRequest) (string, *respon
 
 // SendSmsCode 发送短信验证码 - 验证码登录
 func (u *userInfoService) SendSmsCode(telephone string) (string, int) {
-	return sms.VerificationCode(telephone)
+	return sms.SendVerificationCode(telephone)
 }
 
 // checkTelephoneExist 检查手机号是否存在
@@ -161,21 +148,8 @@ func (u *userInfoService) checkTelephoneExist(telephone string) (string, int) {
 
 // Register 注册，返回(message, register_respond_string, error)
 func (u *userInfoService) Register(registerReq request.RegisterRequest) (string, *respond.RegisterRespond, int) {
-	key := "auth_code_" + registerReq.Telephone
-	code, err := myredis.GetKey(key)
-	if err != nil {
-		zlog.Error(err.Error())
-		return constants.SYSTEM_ERROR, nil, -1
-	}
-	if code != registerReq.SmsCode {
-		message := "验证码不正确，请重试"
-		zlog.Info(message)
-		return message, nil, -2
-	} else {
-		if err := myredis.DelKeyIfExists(key); err != nil {
-			zlog.Error(err.Error())
-			return constants.SYSTEM_ERROR, nil, -1
-		}
+	if message, ret := sms.CheckVerificationCode(registerReq.Telephone, registerReq.SmsCode); ret != 0 {
+		return message, nil, ret
 	}
 	// 不用校验手机号，前端校验
 	// 判断电话是否已经被注册过了

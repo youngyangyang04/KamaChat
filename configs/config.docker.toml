@@ -25,8 +25,18 @@ db = 0
 [authCodeConfig]
 accessKeyID = ""
 accessKeySecret = ""
-signName = "阿里云短信测试"
-templateCode = "SMS_154950909"
+signName = ""
+templateCode = ""
+schemeName = ""
+countryCode = "86"
+codeLength = 6
+validTime = 300
+duplicatePolicy = 1
+interval = 60
+codeType = 1
+caseAuthPolicy = 1
+returnVerifyCode = false
+autoRetry = 1
 
 [logConfig]
 logPath = "./logs/gochat.log"
